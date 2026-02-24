@@ -1,0 +1,30 @@
+{
+  "name": "api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "bot:set-webhook": "tsx scripts/setWebhook.ts",
+    "bot:del-webhook": "tsx -e \"import('dotenv/config').then(()=>fetch('https://api.telegram.org/bot'+process.env.BOT_TOKEN+'/deleteWebhook',{method:'POST'}).then(r=>r.json()).then(console.log))\""
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.2",
+    "@prisma/client": "^5.22.0",
+    "@roulette/shared": "workspace:*",
+    "fastify": "^5.1.0",
+    "fastify-plugin": "^5.0.1",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "roulette-app",
+  "private": true,
+  "scripts": {
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev": "pnpm run dev:api & pnpm run dev:web",
+    "build": "pnpm --filter web build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
+  }
+}

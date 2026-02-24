@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: roulette-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: roulette
+      POSTGRES_PASSWORD: roulette
+      POSTGRES_DB: roulette
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roulette -d roulette"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: roulette-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://roulette:roulette@postgres:5432/roulette
+      BOT_TOKEN: ${BOT_TOKEN}
+      WEBHOOK_URL: ${WEBHOOK_URL}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-roulette-webhook-secret}
+      TON_API_KEY: ${TON_API_KEY:-}
+      WEB_APP_URL: ${WEB_APP_URL:-http://localhost:5173}
+      PORT: 3001
+      NODE_ENV: production
+
+volumes:
+  postgres_data:
