@@ -10,6 +10,8 @@
 import type { FastifyPluginAsync } from "fastify";
 import { config } from "../config/index.js";
 import { PaymentService } from "../services/PaymentService.js";
+import { ReferralService } from "../services/ReferralService.js";
+import { prisma } from "../lib/prisma.js";
 
 // ── Telegram API helpers ──────────────────────────────────────────────────────
 
@@ -73,8 +75,22 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
       const update = req.body;
 
       // ── /start ──────────────────────────────────────────────────────────────
-      if (update.message?.text?.startsWith("/start")) {
+      if (update.message?.text?.startsWith("/start") && update.message.from) {
         const chatId = update.message.chat.id;
+        const from = update.message.from;
+
+        // Upsert пользователя при /start
+        await prisma.user.upsert({
+          where: { id: BigInt(from.id) },
+          create: { id: BigInt(from.id), firstName: from.first_name, username: from.username ?? null },
+          update: { firstName: from.first_name, username: from.username ?? null },
+        });
+
+        // Реферальный параметр: /start 123456789
+        const startParam = update.message.text.split(" ")[1];
+        if (startParam && /^\d+$/.test(startParam)) {
+          await ReferralService.applyReferral(from.id, Number(startParam));
+        }
 
         await tgCall("sendMessage", {
           chat_id: chatId,

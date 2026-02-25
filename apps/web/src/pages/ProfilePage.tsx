@@ -3,6 +3,7 @@ import { useTonConnectUI, useTonAddress } from "@tonconnect/ui-react";
 import { Avatar } from "@/components/profile/Avatar";
 import { DonateModal } from "@/components/profile/DonateModal";
 import { InventoryModal } from "@/components/profile/InventoryModal";
+import { ReferralsModal } from "@/components/profile/ReferralsModal";
 import { useProfile } from "@/hooks/useProfile";
 import { useStore } from "@/store/index";
 import { api } from "@/api/client";
@@ -73,8 +74,9 @@ function Divider() {
 export function ProfilePage() {
   const { profile, profileError, nfts } = useProfile();
   const { updateCoins } = useStore();
-  const [showDonate, setShowDonate]       = useState(false);
-  const [showInventory, setShowInventory] = useState(false);
+  const [showDonate, setShowDonate]         = useState(false);
+  const [showInventory, setShowInventory]   = useState(false);
+  const [showReferrals, setShowReferrals]   = useState(false);
   const [tonConnectUI] = useTonConnectUI();
   const walletAddress   = useTonAddress();
 
@@ -241,18 +243,26 @@ export function ProfilePage() {
             </div>
             <div className="flex-1 text-left min-w-0">
               <p className="text-[14px] font-semibold text-white leading-tight">Инвентарь подарков</p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>
-                {profile.walletAddress ? `${nfts.length} предметов` : "Подключи кошелёк"}
-              </p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>0 предметов</p>
             </div>
-            {nfts.length > 0 && (
-              <span
-                className="px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0"
-                style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--accent-border)" }}
-              >
-                {nfts.length}
-              </span>
-            )}
+            <Chevron />
+          </button>
+
+          <Divider />
+
+          {/* Рефералы */}
+          <button
+            className="w-full flex items-center gap-3 px-4 py-[14px] active:bg-white/5 transition-colors"
+            onClick={() => setShowReferrals(true)}
+          >
+            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
+              style={{ background: "var(--bg-card-2)" }}>
+              💎
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-[14px] font-semibold text-white leading-tight">Рефералы</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>Зарабатывай 10% с друзей</p>
+            </div>
             <Chevron />
           </button>
 
@@ -323,7 +333,8 @@ export function ProfilePage() {
       </div>
 
       {showDonate    && <DonateModal    onClose={() => setShowDonate(false)} />}
-      {showInventory && <InventoryModal nfts={nfts} totalDonatedTon={profile.totalDonatedTon} onClose={() => setShowInventory(false)} />}
+      {showInventory && <InventoryModal onClose={() => setShowInventory(false)} />}
+      {showReferrals && <ReferralsModal onClose={() => setShowReferrals(false)} />}
     </div>
   );
 }

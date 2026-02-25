@@ -55,6 +55,14 @@ export interface TonDonateRequest {
   amount: string;        // в TON, строка чтобы не терять точность
 }
 
+// ─── Referrals ───────────────────────────────────────────────────────────────
+
+export interface ReferralInfo {
+  referredCount: number;
+  earnedTon: number;
+  referralLink: string;   // полная ссылка https://t.me/Bot?start=123
+}
+
 // ─── API helpers ─────────────────────────────────────────────────────────────
 
 export interface ApiError {

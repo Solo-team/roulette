@@ -5,6 +5,7 @@ interface TelegramWebApp {
   expand(): void;
   initData: string;
   openInvoice(url: string, callback: (status: string) => void): void;
+  openTelegramLink(url: string): void;
 }
 
 interface Window {

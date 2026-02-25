@@ -9,6 +9,7 @@ function requireEnv(name: string): string {
 export const config = {
   port: Number(process.env["PORT"] ?? 3001),
   botToken: requireEnv("BOT_TOKEN"),
+  botUsername: process.env["BOT_USERNAME"] ?? "",
   webhookSecret: process.env["WEBHOOK_SECRET"] ?? "",
   webhookUrl: process.env["WEBHOOK_URL"] ?? "",   // https://your-api.com/bot/webhook
   tonApiKey: process.env["TON_API_KEY"] ?? "",
