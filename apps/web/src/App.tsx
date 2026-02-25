@@ -3,7 +3,7 @@ import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { LeaderboardPage } from "@/pages/LeaderboardPage";
 
-const MANIFEST_URL = "https://your-domain.com/tonconnect-manifest.json"; // замени
+const MANIFEST_URL = "https://roulette-kz79.vercel.app/tonconnect-manifest.json";
 
 export function App() {
   return (
