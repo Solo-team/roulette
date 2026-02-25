@@ -15,10 +15,10 @@ await app.register(cors, { origin: config.webAppUrl });
 await app.register(webhookRoutes);
 await app.register(authPlugin);
 
-await app.register(profileRoutes);
-await app.register(leaderboardRoutes);
-await app.register(nftRoutes);
-await app.register(paymentsRoutes);
+await app.register(profileRoutes, { prefix: "/api" });
+await app.register(leaderboardRoutes, { prefix: "/api" });
+await app.register(nftRoutes, { prefix: "/api" });
+await app.register(paymentsRoutes, { prefix: "/api" });
 
 app.get("/health", async () => ({ status: "ok" }));
 
