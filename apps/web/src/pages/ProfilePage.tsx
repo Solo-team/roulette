@@ -1,29 +1,108 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTonConnectUI, useTonAddress } from "@tonconnect/ui-react";
 import { Avatar } from "@/components/profile/Avatar";
-import { WalletButton } from "@/components/profile/WalletButton";
 import { DonateModal } from "@/components/profile/DonateModal";
 import { NftGallery } from "@/components/profile/NftGallery";
-import { NftClaimCard } from "@/components/profile/NftClaimCard";
 import { useProfile } from "@/hooks/useProfile";
+import { useStore } from "@/store/index";
+import { api } from "@/api/client";
+import type { NftClaimResult } from "@roulette/shared";
 
-// Декоративные частицы (как в Rolls)
+// ── Частицы ──────────────────────────────────────────────────────────────────
 const DOTS = [
-  { x: 7,  y: 9,  s: 1.5, d: 0.0, gold: true  },
-  { x: 91, y: 7,  s: 2.0, d: 0.8, gold: false },
-  { x: 4,  y: 30, s: 1.0, d: 1.6, gold: false },
-  { x: 95, y: 25, s: 1.5, d: 0.4, gold: true  },
-  { x: 10, y: 52, s: 2.0, d: 2.2, gold: true  },
-  { x: 90, y: 46, s: 1.0, d: 1.0, gold: false },
-  { x: 5,  y: 70, s: 1.5, d: 1.4, gold: true  },
-  { x: 93, y: 66, s: 2.0, d: 0.2, gold: false },
-  { x: 50, y: 3,  s: 1.5, d: 1.8, gold: true  },
+  { x: 7,  y: 9,  s: 1.5, d: 0.0 }, { x: 88, y: 7,  s: 1.0, d: 0.8 },
+  { x: 4,  y: 28, s: 2.0, d: 1.4 }, { x: 93, y: 24, s: 1.5, d: 0.4 },
+  { x: 8,  y: 50, s: 1.0, d: 2.0 }, { x: 92, y: 46, s: 2.0, d: 1.1 },
+  { x: 5,  y: 70, s: 1.5, d: 2.6 }, { x: 91, y: 68, s: 1.0, d: 1.7 },
+  { x: 48, y: 4,  s: 1.5, d: 0.9 }, { x: 55, y: 88, s: 1.0, d: 1.3 },
 ];
 
+// ── Иконки ────────────────────────────────────────────────────────────────────
+function TonIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 56 56" fill="none">
+      <circle cx="28" cy="28" r="28" fill="#0098EA"/>
+      <path d="M37.58 15.4H18.42c-3.49 0-5.67 3.79-3.92 6.79l11.5 19.52c.87 1.5 2.97 1.5 3.84 0l11.5-19.52c1.75-3-.43-6.79-3.84-6.79Z" fill="white"/>
+      <path d="M15.96 22.94 26.08 41.71c.87 1.5 2.97 1.5 3.84 0l10.12-18.77c.18.3.31.63.39.97L29.92 41.71c-.87 1.5-2.97 1.5-3.84 0L15.57 23.91c.08-.34.21-.67.39-.97Z" fill="white" fillOpacity=".5"/>
+    </svg>
+  );
+}
+
+function WalletSvg({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="6" width="20" height="14" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M2 10h20" stroke="currentColor" strokeWidth="1.5"/>
+      <circle cx="16" cy="15" r="1.25" fill="currentColor"/>
+    </svg>
+  );
+}
+
+// ── Countdown hook ─────────────────────────────────────────────────────────────
+function useCountdown(targetIso: string | null) {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    if (!targetIso) return;
+    const update = () => setSeconds(Math.max(0, Math.floor((new Date(targetIso).getTime() - Date.now()) / 1000)));
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [targetIso]);
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return { seconds, h, m, s };
+}
+function pad(n: number) { return String(n).padStart(2, "0"); }
+
+// ── Chevron ───────────────────────────────────────────────────────────────────
+function Chevron() {
+  return (
+    <svg width="7" height="12" viewBox="0 0 7 12" fill="none" style={{ color: "var(--text-muted)", flexShrink: 0 }}>
+      <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+// ── Разделитель ───────────────────────────────────────────────────────────────
+function Divider() {
+  return <div className="h-px mx-4" style={{ background: "var(--border)" }} />;
+}
+
+// ══ ProfilePage ════════════════════════════════════════════════════════════════
 export function ProfilePage() {
   const { profile, profileError, nfts } = useProfile();
+  const { updateCoins } = useStore();
   const [showDonate, setShowDonate] = useState(false);
-  const [showNfts, setShowNfts] = useState(false);
+  const [showNfts, setShowNfts]     = useState(false);
+  const [tonConnectUI] = useTonConnectUI();
+  const walletAddress   = useTonAddress();
 
+  // Claim state
+  const [nextClaimAt, setNextClaimAt]   = useState<string | null>(null);
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [justClaimed, setJustClaimed]   = useState(false);
+  const { seconds, h, m, s } = useCountdown(nextClaimAt);
+  const canClaim = seconds === 0;
+
+  useEffect(() => {
+    if (profile?.lastClaimAt) {
+      setNextClaimAt(new Date(new Date(profile.lastClaimAt).getTime() + 24 * 3600 * 1000).toISOString());
+    }
+  }, [profile?.lastClaimAt]);
+
+  async function handleClaim() {
+    setClaimLoading(true);
+    try {
+      const result = await api.post<NftClaimResult>("/nft/claim");
+      updateCoins(result.coins);
+      setNextClaimAt(result.nextClaimAt);
+      setJustClaimed(true);
+      setTimeout(() => setJustClaimed(false), 2500);
+    } catch { /* handled */ } finally { setClaimLoading(false); }
+  }
+
+  // ── Loading / error ──────────────────────────────────────────────────────────
   if (!profile) {
     return (
       <div className="flex items-center justify-center h-screen" style={{ background: "var(--bg)" }}>
@@ -31,20 +110,17 @@ export function ProfilePage() {
           {profileError ? (
             <>
               <span className="text-4xl">⚠️</span>
-              <p className="text-white/50 text-sm text-center px-8">
-                Не удалось подключиться к серверу.<br />
-                Открой бота через Telegram.
+              <p className="text-center px-8 text-sm" style={{ color: "var(--text-dim)" }}>
+                Не удалось подключиться к серверу.<br />Открой бота через Telegram.
               </p>
             </>
           ) : (
             <>
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full border-2 border-yellow-400/30 border-t-yellow-400 animate-spin" />
-                <div className="absolute inset-2 rounded-full border border-purple-400/20 border-t-purple-400 animate-spin"
-                  style={{ animationDirection: "reverse", animationDuration: "1.5s" }} />
-                <span className="absolute inset-0 flex items-center justify-center text-2xl">🎰</span>
+              <div className="relative w-12 h-12">
+                <div className="absolute inset-0 rounded-full border-2 animate-spin"
+                  style={{ borderColor: "transparent", borderTopColor: "var(--accent)" }} />
               </div>
-              <p className="text-white/30 text-sm tracking-wide">Загрузка...</p>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>Загрузка...</p>
             </>
           )}
         </div>
@@ -53,199 +129,200 @@ export function ProfilePage() {
   }
 
   const daysSince = Math.floor((Date.now() - new Date(profile.createdAt).getTime()) / 86400000);
+  const daysLabel = daysSince === 1 ? "день" : daysSince < 5 ? "дня" : "дней";
 
   return (
     <div className="min-h-screen pb-28" style={{ background: "var(--bg)" }}>
 
-      {/* ── Декоративные частицы ────────────────────────────────────── */}
+      {/* Частицы */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         {DOTS.map((d, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              left: `${d.x}%`,
-              top: `${d.y}%`,
-              width: d.s * 3,
-              height: d.s * 3,
-              background: d.gold ? "rgba(245,200,66,0.55)" : "rgba(168,85,247,0.45)",
-              animation: `particle-float ${3 + d.d}s ease-in-out infinite`,
-              animationDelay: `${d.d}s`,
-              boxShadow: d.gold
-                ? `0 0 ${d.s * 5}px rgba(245,200,66,0.4)`
-                : `0 0 ${d.s * 5}px rgba(168,85,247,0.35)`,
-            }}
-          />
+          <div key={i} className="absolute rounded-full" style={{
+            left: `${d.x}%`, top: `${d.y}%`,
+            width: d.s * 3, height: d.s * 3,
+            background: "rgba(255,255,255,0.5)",
+            animation: `particle-float ${2.8 + d.d}s ease-in-out infinite`,
+            animationDelay: `${d.d}s`,
+          }} />
         ))}
       </div>
 
-      {/* ── Центрированный хедер ────────────────────────────────────── */}
-      <div className="relative flex flex-col items-center px-4 pt-8 pb-5">
-        {/* Wallet — справа вверху */}
-        <div className="absolute top-6 right-4">
-          <WalletButton />
+      {/* ── Топ-бар ─────────────────────────────────────────────────────────── */}
+      <div className="relative flex items-center justify-between px-4 pt-6 pb-2">
+        {/* Слева: каунтер монет */}
+        <div
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+        >
+          <span className="text-[15px]">🪙</span>
+          <span className="text-sm font-bold text-white">{profile.coins.toLocaleString()}</span>
         </div>
 
-        {/* Фоновое свечение под аватаром */}
-        <div className="absolute" style={{
-          width: 180, height: 180,
-          top: 0, left: "50%",
-          transform: "translateX(-50%)",
-          background: "radial-gradient(circle, rgba(124,58,237,0.22) 0%, transparent 70%)",
-          filter: "blur(24px)",
-          pointerEvents: "none",
-        }} />
-
-        {/* Аватар */}
-        <div className="relative">
-          {/* Вращающееся conic-gradient кольцо */}
-          <div className="absolute -inset-[3px] rounded-full" style={{
-            background: "conic-gradient(from 0deg, #7C3AED 0%, #F5C842 33%, #A855F7 66%, #F5C842 85%, #7C3AED 100%)",
-            filter: "blur(4px)",
-            opacity: 0.9,
-            animation: "spin-slow 7s linear infinite",
-          }} />
-          <div className="relative rounded-full p-[2px]" style={{
-            background: "linear-gradient(135deg, #F5C842 0%, #A855F7 50%, #FFE580 100%)",
-          }}>
-            <div className="rounded-full overflow-hidden" style={{ background: "var(--bg)" }}>
-              <Avatar photoUrl={profile.photoUrl} firstName={profile.firstName} userId={profile.id} size={76} />
-            </div>
-          </div>
-        </div>
-
-        {/* Имя и username */}
-        <h1 className="font-extrabold text-[22px] mt-3 text-white tracking-tight leading-none">
-          {profile.firstName}
-        </h1>
-        {profile.username && (
-          <p className="text-white/35 text-sm mt-1">@{profile.username}</p>
-        )}
+        {/* Справа: кнопка кошелька */}
+        <button
+          onClick={() => tonConnectUI.openModal()}
+          className="w-10 h-10 rounded-full flex items-center justify-center transition-opacity active:opacity-70"
+          style={{
+            background: walletAddress ? "rgba(0,136,204,0.15)" : "var(--bg-card)",
+            border: `1px solid ${walletAddress ? "var(--accent-border)" : "var(--border)"}`,
+            color: walletAddress ? "var(--accent)" : "var(--text-dim)",
+          }}
+        >
+          <WalletSvg size={17} />
+        </button>
       </div>
 
-      {/* ── Контент ─────────────────────────────────────────────────── */}
+      {/* ── Аватар ──────────────────────────────────────────────────────────── */}
+      <div className="relative flex flex-col items-center pt-3 pb-5">
+        <div className="rounded-full p-[2.5px]" style={{ background: "rgba(255,255,255,0.18)" }}>
+          <div className="rounded-full overflow-hidden" style={{ background: "var(--bg)" }}>
+            <Avatar photoUrl={profile.photoUrl} firstName={profile.firstName} userId={profile.id} size={82} />
+          </div>
+        </div>
+        <p className="mt-3 text-[15px] font-semibold" style={{ color: "var(--text-dim)" }}>
+          {profile.username ? `@${profile.username}` : profile.firstName}
+        </p>
+      </div>
+
+      {/* ── Контент ─────────────────────────────────────────────────────────── */}
       <div className="px-4 flex flex-col gap-3">
 
         {/* Карточка баланса */}
         <div
-          className="rounded-[20px] p-4 animate-fade-up"
-          style={{
-            background: "linear-gradient(135deg, rgba(124,58,237,0.18) 0%, rgba(8,8,16,0.8) 60%, rgba(245,200,66,0.08) 100%)",
-            border: "1px solid rgba(245,200,66,0.18)",
-            boxShadow: "0 8px 32px rgba(124,58,237,0.15), inset 0 1px 0 rgba(255,255,255,0.05)",
-          }}
+          className="rounded-[20px] px-4 py-4 animate-fade-up"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
         >
-          <p className="text-white/35 text-[11px] uppercase tracking-[0.18em] mb-2">Баланс</p>
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-baseline gap-1.5 flex-wrap">
-                <span className="text-shimmer font-black leading-none" style={{ fontSize: 34 }}>
-                  {profile.coins.toLocaleString()}
-                </span>
-                <span className="text-white/30 text-sm font-medium">монет</span>
-              </div>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="text-sm">💎</span>
-                <span className="text-white/40 text-xs">{profile.totalDonatedTon.toFixed(2)} TON задонатено</span>
-              </div>
+          <p className="text-[11px] tracking-[0.15em] uppercase mb-3" style={{ color: "var(--text-muted)" }}>
+            Баланс
+          </p>
+          <div className="flex items-center gap-2">
+            {/* Левая часть: иконка + сумма */}
+            <div className="flex-1 flex items-center gap-2.5 min-w-0">
+              <TonIcon size={26} />
+              <span className="font-black text-white leading-none" style={{ fontSize: 26 }}>
+                {profile.coins.toLocaleString()}
+              </span>
+              <span className="text-sm" style={{ color: "var(--text-dim)" }}>монет</span>
             </div>
+            {/* Правая часть: кнопки */}
             <button
               onClick={() => setShowDonate(true)}
-              className="flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-bold relative overflow-hidden"
+              className="flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-bold btn-primary"
+            >
+              Пополнить
+            </button>
+            <button
+              onClick={() => tonConnectUI.openModal()}
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{
-                background: "linear-gradient(135deg, #FFE566, #F5C842, #C8960C)",
-                color: "#1a0e00",
-                boxShadow: "0 4px 16px rgba(245,200,66,0.4), inset 0 1px 0 rgba(255,255,255,0.35)",
+                background: walletAddress ? "rgba(0,136,204,0.12)" : "var(--bg-card-2)",
+                color: walletAddress ? "var(--accent)" : "var(--text-muted)",
               }}
             >
-              <span className="absolute inset-y-0 animate-btn-shine pointer-events-none" style={{
-                width: "50%",
-                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
-              }} />
-              <span className="relative">+ Пополнить</span>
+              <WalletSvg size={16} />
             </button>
           </div>
         </div>
 
-        {/* Ежедневный клейм */}
-        <div className="animate-fade-up delay-1">
-          <NftClaimCard />
-        </div>
-
-        {/* Список секций */}
+        {/* Список */}
         <div
-          className="rounded-[20px] overflow-hidden animate-fade-up delay-2"
-          style={{
-            background: "rgba(255,255,255,0.025)",
-            border: "1px solid rgba(255,255,255,0.07)",
-          }}
+          className="rounded-[20px] overflow-hidden animate-fade-up"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", animationDelay: "0.06s" }}
         >
+
           {/* NFT коллекция */}
           <button
             className="w-full flex items-center gap-3 px-4 py-[14px] active:bg-white/5 transition-colors"
             onClick={() => setShowNfts((v) => !v)}
           >
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0" style={{
-              background: "linear-gradient(135deg, rgba(124,58,237,0.3), rgba(124,58,237,0.06))",
-              border: "1px solid rgba(124,58,237,0.2)",
-            }}>
+            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
+              style={{ background: "var(--bg-card-2)" }}>
               🖼
             </div>
             <div className="flex-1 text-left min-w-0">
               <p className="text-[14px] font-semibold text-white leading-tight">NFT коллекция</p>
-              <p className="text-white/35 text-xs mt-0.5">
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>
                 {profile.walletAddress ? `${nfts.length} предметов` : "Подключи кошелёк"}
               </p>
             </div>
             {nfts.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0" style={{
-                background: "rgba(124,58,237,0.25)",
-                color: "#c4b5fd",
-                border: "1px solid rgba(124,58,237,0.3)",
-              }}>
+              <span
+                className="px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0"
+                style={{ background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid var(--accent-border)" }}
+              >
                 {nfts.length}
               </span>
             )}
-            <span className="text-white/20 text-lg ml-1 flex-shrink-0"
-              style={{ transform: showNfts ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>
-              ›
-            </span>
+            <div style={{ transform: showNfts ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>
+              <Chevron />
+            </div>
           </button>
 
-          <div className="h-px mx-4" style={{ background: "rgba(255,255,255,0.05)" }} />
+          <Divider />
 
-          {/* Дней в игре */}
+          {/* Ежедневный клейм */}
           <div className="flex items-center gap-3 px-4 py-[14px]">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0" style={{
-              background: "linear-gradient(135deg, rgba(249,115,22,0.3), rgba(249,115,22,0.06))",
-              border: "1px solid rgba(249,115,22,0.2)",
-            }}>
+            <div
+              className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
+              style={{ background: canClaim ? "rgba(0,136,204,0.18)" : "var(--bg-card-2)" }}
+            >
+              {justClaimed ? "✨" : canClaim ? "🎁" : "⏳"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-semibold text-white leading-tight">Ежедневный клейм</p>
+              {!canClaim && !justClaimed ? (
+                <p className="text-xs font-mono mt-0.5" style={{ color: "var(--accent)" }}>
+                  {pad(h)}:{pad(m)}:{pad(s)}
+                </p>
+              ) : (
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>+100 монет</p>
+              )}
+            </div>
+            <button
+              onClick={handleClaim}
+              disabled={!canClaim || claimLoading}
+              className="flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-35"
+              style={canClaim
+                ? { background: "var(--accent)", color: "#fff", boxShadow: "0 3px 10px rgba(0,136,204,0.3)" }
+                : { background: "var(--bg-card-2)", color: "var(--text-dim)" }
+              }
+            >
+              {claimLoading ? "..." : canClaim ? "Забрать" : "Ждать"}
+            </button>
+          </div>
+
+          <Divider />
+
+          {/* В игре */}
+          <div className="flex items-center gap-3 px-4 py-[14px]">
+            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
+              style={{ background: "var(--bg-card-2)" }}>
               🔥
             </div>
-            <div className="flex-1 text-left">
+            <div className="flex-1">
               <p className="text-[14px] font-semibold text-white leading-tight">В игре</p>
-              <p className="text-white/35 text-xs mt-0.5">{daysSince} {daysSince === 1 ? "день" : daysSince < 5 ? "дня" : "дней"}</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>{daysSince} {daysLabel}</p>
             </div>
           </div>
 
-          <div className="h-px mx-4" style={{ background: "rgba(255,255,255,0.05)" }} />
+          <Divider />
 
           {/* TON донат */}
           <div className="flex items-center gap-3 px-4 py-[14px]">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0" style={{
-              background: "linear-gradient(135deg, rgba(0,136,204,0.3), rgba(0,136,204,0.06))",
-              border: "1px solid rgba(0,136,204,0.2)",
-            }}>
-              💎
+            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(0,136,204,0.12)" }}>
+              <TonIcon size={24} />
             </div>
-            <div className="flex-1 text-left">
+            <div className="flex-1">
               <p className="text-[14px] font-semibold text-white leading-tight">TON донат</p>
-              <p className="text-white/35 text-xs mt-0.5">{profile.totalDonatedTon.toFixed(2)} TON</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>
+                {profile.totalDonatedTon.toFixed(2)} TON
+              </p>
             </div>
           </div>
         </div>
 
-        {/* NFT галерея — разворачивается */}
+        {/* NFT галерея */}
         {showNfts && (
           <div className="animate-fade-up">
             <NftGallery nfts={nfts} />

@@ -59,36 +59,23 @@ export function NftClaimCard() {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl animate-fade-up" style={{ animationDelay: "0.3s" }}>
-      {/* background gradient */}
-      <div
-        className="absolute inset-0 opacity-20"
-        style={{ background: "linear-gradient(135deg, #7C3AED 0%, #F5C842 100%)" }}
-      />
-      {/* border */}
-      <div
-        className="absolute inset-0 rounded-2xl"
-        style={{ padding: 1, background: "linear-gradient(135deg, rgba(124,58,237,0.5), rgba(245,200,66,0.4))" }}
-      >
-        <div className="absolute inset-0 rounded-2xl" style={{ background: "var(--bg-card)" }} />
-      </div>
-
-      {canClaim && (
-        <div
-          className="absolute inset-0 rounded-2xl animate-glow"
-          style={{ boxShadow: "0 0 30px rgba(245,200,66,0.15)" }}
-        />
-      )}
-
-      <div className="relative px-4 py-4 flex items-center gap-4">
+    <div
+      className="rounded-[20px] overflow-hidden animate-fade-up"
+      style={{
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+        animationDelay: "0.3s",
+      }}
+    >
+      <div className="px-4 py-[14px] flex items-center gap-3">
         {/* icon */}
         <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+          className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
           style={{
             background: canClaim
-              ? "linear-gradient(135deg, #F5C842, #C8960C)"
-              : "linear-gradient(135deg, rgba(124,58,237,0.4), rgba(245,200,66,0.2))",
-            boxShadow: canClaim ? "0 4px 16px rgba(245,200,66,0.35)" : "none",
+              ? "var(--accent)"
+              : "var(--bg-card-2)",
+            boxShadow: canClaim ? "0 4px 14px rgba(0,136,204,0.35)" : "none",
           }}
         >
           {justClaimed ? "✨" : canClaim ? "🎁" : "⏳"}
@@ -96,10 +83,10 @@ export function NftClaimCard() {
 
         {/* text */}
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm text-white leading-none">
+          <p className="text-[14px] font-semibold text-white leading-tight">
             {justClaimed ? "Монеты получены!" : "Ежедневный клейм"}
           </p>
-          <p className="text-white/40 text-xs mt-0.5">+100 монет каждые 24 часа</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>+100 монет каждые 24 часа</p>
 
           {!canClaim && !justClaimed && (
             <div className="flex items-center gap-1.5 mt-2">
@@ -111,11 +98,11 @@ export function NftClaimCard() {
                 <div key={label} className="flex items-baseline gap-0.5">
                   <span
                     className="font-mono font-bold text-sm px-1.5 py-0.5 rounded-lg"
-                    style={{ background: "rgba(255,255,255,0.07)", color: "var(--gold-light)" }}
+                    style={{ background: "rgba(255,255,255,0.07)", color: "var(--accent)" }}
                   >
                     {val}
                   </span>
-                  <span className="text-white/30 text-[10px]">{label}</span>
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>{label}</span>
                 </div>
               ))}
             </div>
@@ -130,9 +117,9 @@ export function NftClaimCard() {
           style={
             canClaim
               ? {
-                  background: "linear-gradient(135deg, #F5C842, #C8960C)",
-                  color: "#1a0e00",
-                  boxShadow: "0 4px 14px rgba(245,200,66,0.4)",
+                  background: "var(--accent)",
+                  color: "#fff",
+                  boxShadow: "0 4px 14px rgba(0,136,204,0.35)",
                 }
               : {
                   background: "rgba(255,255,255,0.07)",
