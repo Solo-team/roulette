@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useTonConnectUI, useTonAddress } from "@tonconnect/ui-react";
 import { Avatar } from "@/components/profile/Avatar";
 import { DonateModal } from "@/components/profile/DonateModal";
-import { NftGallery } from "@/components/profile/NftGallery";
+import { InventoryModal } from "@/components/profile/InventoryModal";
 import { useProfile } from "@/hooks/useProfile";
 import { useStore } from "@/store/index";
 import { api } from "@/api/client";
@@ -73,8 +73,8 @@ function Divider() {
 export function ProfilePage() {
   const { profile, profileError, nfts } = useProfile();
   const { updateCoins } = useStore();
-  const [showDonate, setShowDonate] = useState(false);
-  const [showNfts, setShowNfts]     = useState(false);
+  const [showDonate, setShowDonate]       = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
   const [tonConnectUI] = useTonConnectUI();
   const walletAddress   = useTonAddress();
 
@@ -160,7 +160,7 @@ export function ProfilePage() {
 
         {/* Справа: кнопка кошелька */}
         <button
-          onClick={() => tonConnectUI.openModal()}
+          onClick={() => walletAddress ? tonConnectUI.disconnect() : tonConnectUI.openModal()}
           className="w-10 h-10 rounded-full flex items-center justify-center transition-opacity active:opacity-70"
           style={{
             background: walletAddress ? "rgba(0,136,204,0.15)" : "var(--bg-card)",
@@ -212,7 +212,7 @@ export function ProfilePage() {
               Пополнить
             </button>
             <button
-              onClick={() => tonConnectUI.openModal()}
+              onClick={() => walletAddress ? tonConnectUI.disconnect() : tonConnectUI.openModal()}
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{
                 background: walletAddress ? "rgba(0,136,204,0.12)" : "var(--bg-card-2)",
@@ -230,17 +230,17 @@ export function ProfilePage() {
           style={{ background: "var(--bg-card)", border: "1px solid var(--border)", animationDelay: "0.06s" }}
         >
 
-          {/* NFT коллекция */}
+          {/* Инвентарь подарков */}
           <button
             className="w-full flex items-center gap-3 px-4 py-[14px] active:bg-white/5 transition-colors"
-            onClick={() => setShowNfts((v) => !v)}
+            onClick={() => setShowInventory(true)}
           >
             <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
               style={{ background: "var(--bg-card-2)" }}>
-              🖼
+              🎁
             </div>
             <div className="flex-1 text-left min-w-0">
-              <p className="text-[14px] font-semibold text-white leading-tight">NFT коллекция</p>
+              <p className="text-[14px] font-semibold text-white leading-tight">Инвентарь подарков</p>
               <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>
                 {profile.walletAddress ? `${nfts.length} предметов` : "Подключи кошелёк"}
               </p>
@@ -253,9 +253,7 @@ export function ProfilePage() {
                 {nfts.length}
               </span>
             )}
-            <div style={{ transform: showNfts ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>
-              <Chevron />
-            </div>
+            <Chevron />
           </button>
 
           <Divider />
@@ -322,15 +320,10 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {/* NFT галерея */}
-        {showNfts && (
-          <div className="animate-fade-up">
-            <NftGallery nfts={nfts} />
-          </div>
-        )}
       </div>
 
-      {showDonate && <DonateModal onClose={() => setShowDonate(false)} />}
+      {showDonate    && <DonateModal    onClose={() => setShowDonate(false)} />}
+      {showInventory && <InventoryModal nfts={nfts} totalDonatedTon={profile.totalDonatedTon} onClose={() => setShowInventory(false)} />}
     </div>
   );
 }
