@@ -55,6 +55,31 @@ export interface TonDonateRequest {
   amount: string;        // в TON, строка чтобы не терять точность
 }
 
+// ─── Tasks ───────────────────────────────────────────────────────────────────
+
+export type TaskStatus   = "locked" | "unclaimed" | "claimable" | "claimed";
+export type TaskCategory = "start" | "daily" | "referral" | "donate" | "game";
+
+export interface TaskItem {
+  id:          string;
+  title:       string;
+  description: string;
+  reward:      number;
+  icon:        string;
+  category:    TaskCategory;
+  status:      TaskStatus;
+}
+
+export interface TasksInfo {
+  tasks:          TaskItem[];
+  completedCount: number;
+  totalCount:     number;
+}
+
+export interface TaskClaimResult {
+  coins: number;   // новый баланс
+}
+
 // ─── Referrals ───────────────────────────────────────────────────────────────
 
 export interface ReferralInfo {

@@ -8,20 +8,30 @@ datasource db {
 }
 
 model User {
-  id               BigInt    @id
+  id               BigInt      @id
   username         String?
   firstName        String
   photoUrl         String?
-  coins            Int       @default(0)
-  totalDonatedTon  Float     @default(0)
+  coins            Int         @default(0)
+  totalDonatedTon  Float       @default(0)
   walletAddress    String?
   lastClaimAt      DateTime?
   referrerId       BigInt?
-  referralEarnings Float     @default(0)
-  referrer         User?     @relation("Referrals", fields: [referrerId], references: [id])
-  referrals        User[]    @relation("Referrals")
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  referralEarnings Float       @default(0)
+  referrer         User?       @relation("Referrals", fields: [referrerId], references: [id])
+  referrals        User[]      @relation("Referrals")
+  completedTasks   UserTask[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model UserTask {
+  userId      BigInt
+  taskId      String
+  claimedAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@id([userId, taskId])
 }
 
 /// Заглушки для лидерборда, пока реальных < 100

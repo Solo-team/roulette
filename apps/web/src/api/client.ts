@@ -11,6 +11,30 @@ const DEV_MOCKS: Record<string, unknown> = {
     earnedTon: 0,
     referralLink: "https://t.me/RollsBot?start=1",
   },
+  "GET /tasks": {
+    completedCount: 1,
+    totalCount: 18,
+    tasks: [
+      { id: "join",       title: "Добро пожаловать",   description: "Открой приложение первый раз",         reward: 50,   icon: "👋", category: "start",    status: "claimed"   },
+      { id: "wallet",     title: "Привяжи кошелёк",    description: "Подключи TON-кошелёк к профилю",       reward: 150,  icon: "👛", category: "start",    status: "claimable" },
+      { id: "first_claim",title: "Первый клейм",       description: "Забери ежедневный бонус",              reward: 100,  icon: "🎁", category: "start",    status: "unclaimed" },
+      { id: "claim_7",    title: "Неделя клеймов",     description: "Забери бонус 7 дней подряд",           reward: 500,  icon: "🔥", category: "daily",    status: "locked"    },
+      { id: "claim_30",   title: "Месяц клеймов",      description: "Забери бонус 30 дней подряд",          reward: 2000, icon: "💫", category: "daily",    status: "locked"    },
+      { id: "veteran_30", title: "Ветеран 30 дней",    description: "Проведи в игре 30 дней",               reward: 1000, icon: "🗓️", category: "daily",    status: "locked"    },
+      { id: "invite_1",   title: "Первый реферал",     description: "Пригласи 1 друга по своей ссылке",     reward: 200,  icon: "👥", category: "referral", status: "unclaimed" },
+      { id: "invite_5",   title: "Команда 5",          description: "Пригласи 5 друзей",                    reward: 600,  icon: "🤝", category: "referral", status: "locked"    },
+      { id: "invite_10",  title: "Команда 10",         description: "Пригласи 10 друзей",                   reward: 1500, icon: "🏆", category: "referral", status: "locked"    },
+      { id: "donate_any", title: "Первая поддержка",   description: "Сделай первый TON-донат",              reward: 300,  icon: "💎", category: "donate",   status: "unclaimed" },
+      { id: "donate_1ton",title: "1 TON донат",        description: "Отправь суммарно 1 TON",               reward: 700,  icon: "💎", category: "donate",   status: "locked"    },
+      { id: "donate_10ton",title: "Большой донат",     description: "Отправь суммарно 10 TON",              reward: 3000, icon: "💎", category: "donate",   status: "locked"    },
+      { id: "stars_buy",  title: "Покупка за Stars",   description: "Купи монеты за Telegram Stars",        reward: 300,  icon: "⭐", category: "donate",   status: "locked"    },
+      { id: "game_1",     title: "Первая игра",        description: "Сыграй первую партию",                 reward: 100,  icon: "🎰", category: "game",     status: "locked"    },
+      { id: "game_10",    title: "10 игр",             description: "Сыграй 10 партий",                     reward: 500,  icon: "🎮", category: "game",     status: "locked"    },
+      { id: "game_50",    title: "Ветеран арены",      description: "Сыграй 50 партий",                     reward: 2000, icon: "🌟", category: "game",     status: "locked"    },
+      { id: "win_1",      title: "Первая победа",      description: "Выиграй первую партию",                reward: 200,  icon: "🏅", category: "game",     status: "locked"    },
+      { id: "top_100",    title: "В топ-100",          description: "Войди в таблицу лидеров",              reward: 1000, icon: "🥇", category: "game",     status: "locked"    },
+    ],
+  },
 };
 
 function getInitData(): string {

@@ -7,6 +7,7 @@ import leaderboardRoutes from "./routes/leaderboard.js";
 import nftRoutes from "./routes/nft.js";
 import paymentsRoutes from "./routes/payments.js";
 import referralRoutes from "./routes/referrals.js";
+import taskRoutes from "./routes/tasks.js";
 import webhookRoutes from "./routes/webhook.js";
 
 const app = Fastify({ logger: true });
@@ -22,6 +23,7 @@ await app.register(leaderboardRoutes, { prefix: "/api" });
 await app.register(nftRoutes, { prefix: "/api" });
 await app.register(paymentsRoutes, { prefix: "/api" });
 await app.register(referralRoutes, { prefix: "/api" });
+await app.register(taskRoutes,    { prefix: "/api" });
 
 app.get("/health", async () => ({ status: "ok" }));
 

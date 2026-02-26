@@ -4,10 +4,11 @@ import { Avatar } from "@/components/profile/Avatar";
 import { DonateModal } from "@/components/profile/DonateModal";
 import { InventoryModal } from "@/components/profile/InventoryModal";
 import { ReferralsModal } from "@/components/profile/ReferralsModal";
+import { TasksModal } from "@/components/profile/TasksModal";
 import { useProfile } from "@/hooks/useProfile";
 import { useStore } from "@/store/index";
 import { api } from "@/api/client";
-import type { NftClaimResult } from "@roulette/shared";
+import type { NftClaimResult, TasksInfo } from "@roulette/shared";
 
 // ── Частицы ──────────────────────────────────────────────────────────────────
 const DOTS = [
@@ -77,6 +78,12 @@ export function ProfilePage() {
   const [showDonate, setShowDonate]         = useState(false);
   const [showInventory, setShowInventory]   = useState(false);
   const [showReferrals, setShowReferrals]   = useState(false);
+  const [showTasks, setShowTasks]           = useState(false);
+  const [tasksInfo, setTasksInfo]           = useState<TasksInfo | null>(null);
+
+  useEffect(() => {
+    api.get<TasksInfo>("/tasks").then(setTasksInfo).catch(() => {});
+  }, []);
   const [tonConnectUI] = useTonConnectUI();
   const walletAddress   = useTonAddress();
 
@@ -250,6 +257,29 @@ export function ProfilePage() {
 
           <Divider />
 
+          {/* Задания */}
+          <button
+            className="w-full flex items-center gap-3 px-4 py-[14px] active:bg-white/5 transition-colors"
+            onClick={() => setShowTasks(true)}
+          >
+            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
+              style={{ background: "var(--bg-card-2)" }}>
+              📋
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-[14px] font-semibold text-white leading-tight">Задания</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>
+                {tasksInfo ? `${tasksInfo.completedCount} / ${tasksInfo.totalCount}` : "0 / 18"}
+              </p>
+            </div>
+            {tasksInfo && tasksInfo.tasks.some(t => t.status === "claimable") && (
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "var(--accent)" }} />
+            )}
+            <Chevron />
+          </button>
+
+          <Divider />
+
           {/* Рефералы */}
           <button
             className="w-full flex items-center gap-3 px-4 py-[14px] active:bg-white/5 transition-colors"
@@ -335,6 +365,7 @@ export function ProfilePage() {
       {showDonate    && <DonateModal    onClose={() => setShowDonate(false)} />}
       {showInventory && <InventoryModal onClose={() => setShowInventory(false)} />}
       {showReferrals && <ReferralsModal onClose={() => setShowReferrals(false)} />}
+      {showTasks     && <TasksModal     onClose={() => { setShowTasks(false); api.get<TasksInfo>("/tasks").then(setTasksInfo).catch(() => {}); }} />}
     </div>
   );
 }

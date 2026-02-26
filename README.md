@@ -134,6 +134,8 @@ roulette-app/
 | `GET` | `/api/profile` | Профиль текущего пользователя |
 | `PATCH` | `/api/profile/wallet` | Привязать TON-кошелёк |
 | `GET` | `/api/referrals` | Реферальная статистика + ссылка |
+| `GET` | `/api/tasks` | Список заданий с прогрессом |
+| `POST` | `/api/tasks/:id/claim` | Забрать награду за задание |
 | `GET` | `/api/leaderboard` | Топ-100 игроков |
 | `POST` | `/api/nft/claim` | Забрать ежедневный клейм |
 | `GET` | `/api/nft` | NFT пользователя |
