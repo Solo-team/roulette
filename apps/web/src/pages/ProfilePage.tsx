@@ -9,6 +9,10 @@ import { useProfile } from "@/hooks/useProfile";
 import { useStore } from "@/store/index";
 import { api } from "@/api/client";
 import type { NftClaimResult, TasksInfo } from "@roulette/shared";
+import {
+  CoinIcon, GiftBoxIcon, ChecklistIcon, DiamondIcon,
+  FlameIcon, HeartIcon, SparkleIcon, ClockIcon, AlertIcon,
+} from "@/components/ui/icons";
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -77,7 +81,7 @@ function pluralDays(n: number) {
 // ── Row ────────────────────────────────────────────────────────────────────────
 
 interface RowProps {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   sub?: string;
   dot?: boolean;
@@ -97,8 +101,8 @@ function Row({ icon, title, sub, dot, onClick, right, iconBg }: RowProps) {
     >
       {/* Icon */}
       <div
-        className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[19px] shrink-0"
-        style={{ background: iconBg ?? "var(--bg-card-2)" }}
+        className="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0"
+        style={{ background: iconBg ?? "var(--bg-card-2)", color: "var(--text-dim)" }}
       >
         {icon}
       </div>
@@ -188,7 +192,7 @@ export function ProfilePage() {
         <div className="flex flex-col items-center gap-4">
           {profileError ? (
             <>
-              <span className="text-4xl">⚠️</span>
+              <span style={{ color: "#f87171" }}><AlertIcon size={44} /></span>
               <p className="text-sm text-center px-8" style={{ color: "var(--text-dim)" }}>
                 Не удалось подключиться.<br />Открой бота через Telegram.
               </p>
@@ -213,16 +217,7 @@ export function ProfilePage() {
     <div className="min-h-screen pb-28" style={{ background: "var(--bg)" }}>
 
       {/* ── Topbar ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 pt-safe pt-5">
-        {/* Left: empty placeholder */}
-        <div className="w-9" />
-
-        {/* Center: app name */}
-        <span className="text-[13px] font-bold tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>
-          Rolls
-        </span>
-
-        {/* Right: wallet */}
+      <div className="flex items-center justify-end px-4 pt-5">
         <button
           onClick={() => walletAddress ? tonConnectUI.disconnect() : tonConnectUI.openModal()}
           className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:opacity-60"
@@ -273,9 +268,9 @@ export function ProfilePage() {
         {/* Coin balance */}
         <div
           className="flex items-center gap-2 mt-3 animate-count-in"
-          style={{ animationDelay: "0.18s" }}
+          style={{ animationDelay: "0.18s", color: "var(--gold)" }}
         >
-          <span style={{ fontSize: 28 }}>🪙</span>
+          <CoinIcon size={30} />
           <span className="font-black text-white" style={{ fontSize: 36, lineHeight: 1 }}>
             {profile.coins.toLocaleString()}
           </span>
@@ -300,14 +295,14 @@ export function ProfilePage() {
           style={{ background: "var(--bg-card)", border: "1px solid var(--border)", animationDelay: "0.1s" }}
         >
           <Row
-            icon="🎁"
+            icon={<GiftBoxIcon size={20} />}
             title="Инвентарь"
             sub="0 предметов"
             onClick={() => setShowInventory(true)}
           />
           <Divider />
           <Row
-            icon="📋"
+            icon={<ChecklistIcon size={20} />}
             title="Задания"
             sub={tasksDone}
             dot={hasClaimable}
@@ -315,7 +310,7 @@ export function ProfilePage() {
           />
           <Divider />
           <Row
-            icon="💎"
+            icon={<DiamondIcon size={20} />}
             title="Рефералы"
             sub="10% с каждого друга"
             onClick={() => setShowReferrals(true)}
@@ -330,10 +325,13 @@ export function ProfilePage() {
           {/* Daily claim */}
           <div className="flex items-center gap-3 px-4 py-[14px]">
             <div
-              className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[19px] shrink-0"
-              style={{ background: canClaim ? "rgba(0,136,204,0.13)" : "var(--bg-card-2)" }}
+              className="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0"
+              style={{
+                background: canClaim ? "rgba(0,136,204,0.13)" : "var(--bg-card-2)",
+                color: justClaimed ? "var(--gold)" : canClaim ? "var(--accent)" : "var(--text-muted)",
+              }}
             >
-              {justClaimed ? "✨" : canClaim ? "🎁" : "⏳"}
+              {justClaimed ? <SparkleIcon size={20} /> : canClaim ? <GiftBoxIcon size={20} /> : <ClockIcon size={20} />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-semibold text-white leading-tight">Ежедневный клейм</p>
@@ -362,7 +360,7 @@ export function ProfilePage() {
 
           {/* Days in game */}
           <Row
-            icon="🔥"
+            icon={<FlameIcon size={20} />}
             title="В игре"
             sub={`${daysSince} ${pluralDays(daysSince)}`}
           />
@@ -371,7 +369,7 @@ export function ProfilePage() {
 
           {/* TON donated */}
           <Row
-            icon="💙"
+            icon={<HeartIcon size={20} />}
             title="TON донат"
             sub={`${profile.totalDonatedTon.toFixed(2)} TON`}
             iconBg="rgba(0,136,204,0.1)"

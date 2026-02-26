@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { CartIcon, MagnifyingGlassIcon } from "@/components/ui/icons";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -313,9 +314,10 @@ export function ShopPage() {
               style={{
                 background: "rgba(0,136,204,0.15)",
                 border: "1px solid rgba(0,136,204,0.3)",
+                color: "var(--accent)",
               }}
             >
-              <span className="text-sm">🛒</span>
+              <CartIcon size={16} />
               <span className="text-sm font-bold" style={{ color: "var(--accent)" }}>
                 {cartCount}
               </span>
@@ -405,7 +407,7 @@ export function ShopPage() {
         </div>
       ) : (
         <div className="flex flex-col items-center gap-3 py-20">
-          <span className="text-4xl">🔍</span>
+          <span style={{ color: "rgba(255,255,255,0.12)" }}><MagnifyingGlassIcon size={56} /></span>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>
             Ничего не найдено
           </p>

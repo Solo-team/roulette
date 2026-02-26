@@ -3,6 +3,7 @@ import { api } from "@/api/client";
 import { useStore } from "@/store/index";
 import { LeaderboardTable } from "@/components/leaderboard/LeaderboardTable";
 import type { LeaderboardEntry } from "@roulette/shared";
+import { TrophyIcon } from "@/components/ui/icons";
 
 const DEV_MOCK_LEADERBOARD: LeaderboardEntry[] = [
   { rank: 1, id: "1", firstName: "Дмитрий",  username: "dmitry_pro",   photoUrl: null, coins: 98400 },
@@ -41,9 +42,9 @@ export function LeaderboardPage() {
       {/* Header */}
       <div className="px-4 pt-10 pb-5 animate-fade-up">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #F5C842, #C8960C)", boxShadow: "0 4px 14px rgba(245,200,66,0.3)" }}>
-            🏆
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, #F5C842, #C8960C)", boxShadow: "0 4px 14px rgba(245,200,66,0.3)", color: "#fff" }}>
+            <TrophyIcon size={20} />
           </div>
           <div>
             <h1 className="text-xl font-bold leading-none">Топ-100</h1>

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { useTgBack } from "@/hooks/useTgBack";
 import { useTonConnectUI, useTonAddress } from "@tonconnect/ui-react";
 import { api } from "@/api/client";
 import type { StarsInvoiceResponse } from "@roulette/shared";
+import { PencilIcon } from "@/components/ui/icons";
 
 interface DonateModalProps {
   onClose: () => void;
@@ -39,13 +41,6 @@ function WalletIcon({ size = 15 }: { size?: number }) {
   );
 }
 
-const DOTS = [
-  { x: 6,  y: 10, s: 1.5, d: 0.0 }, { x: 88, y: 7,  s: 1.0, d: 0.7 },
-  { x: 4,  y: 32, s: 2.0, d: 1.3 }, { x: 93, y: 28, s: 1.5, d: 0.4 },
-  { x: 8,  y: 54, s: 1.0, d: 1.9 }, { x: 91, y: 50, s: 2.0, d: 1.0 },
-  { x: 5,  y: 74, s: 1.5, d: 2.5 }, { x: 92, y: 70, s: 1.0, d: 1.6 },
-];
-
 // ── Stars карточка ─────────────────────────────────────────────────────────────
 function StarCard({ stars, loading, onBuy }: {
   stars: number;
@@ -63,7 +58,7 @@ function StarCard({ stars, loading, onBuy }: {
         border: "1px solid var(--border)",
       }}
     >
-      <span className="relative text-4xl leading-none">⭐</span>
+      <span className="relative leading-none"><StarsIcon size={38} /></span>
       <span className="relative font-black text-white leading-none mt-1" style={{ fontSize: 20 }}>
         {stars.toLocaleString()}
       </span>
@@ -83,6 +78,7 @@ function StarCard({ stars, loading, onBuy }: {
 
 // ── Основной компонент ────────────────────────────────────────────────────────
 export function DonateModal({ onClose }: DonateModalProps) {
+  useTgBack(onClose);
   const [tab, setTab]           = useState<"ton" | "stars">("ton");
   const [amount, setAmount]     = useState("1");
   // Защита от tap-through: игнорируем клик на backdrop первые 300 мс
@@ -168,38 +164,13 @@ export function DonateModal({ onClose }: DonateModalProps) {
         style={{ background: "var(--bg)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Частицы */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {DOTS.map((d, i) => (
-            <div key={i} className="absolute rounded-full" style={{
-              left: `${d.x}%`, top: `${d.y}%`,
-              width: d.s * 3, height: d.s * 3,
-              background: "rgba(255,255,255,0.55)",
-              animation: `particle-float ${3 + d.d}s ease-in-out infinite`,
-              animationDelay: `${d.d}s`,
-            }} />
-          ))}
-        </div>
-
         {/* Верхнее свечение */}
         <div className="absolute inset-x-0 top-0 h-48 pointer-events-none" style={{
           background: "radial-gradient(ellipse 100% 60% at 50% 0%, rgba(0,136,204,0.12) 0%, transparent 70%)",
         }} />
 
-        {/* ── Хедер ── */}
-        <div className="relative flex items-center justify-between px-4 pt-5 pb-3 flex-shrink-0">
-          <div className="w-9" />
-          <h2 className="text-base font-bold text-white">Пополнить</h2>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.4)" }}
-          >
-            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-              <path d="M1 1l9 9M10 1l-9 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
+        {/* top spacer */}
+        <div className="flex-shrink-0 pt-5" />
 
         {/* ── Табы ── */}
         <div className="relative flex-shrink-0 flex justify-center px-4 mb-4">
@@ -282,7 +253,7 @@ export function DonateModal({ onClose }: DonateModalProps) {
                     color: "rgba(255,255,255,0.55)",
                   }}
                 >
-                  <span style={{ fontSize: 15 }}>✏️</span> Своя сумма
+                  <PencilIcon size={15} /> Своя сумма
                 </button>
               )}
             </div>

@@ -1,15 +1,8 @@
 import { useState, useEffect } from "react";
+import { useTgBack } from "@/hooks/useTgBack";
 import { api } from "@/api/client";
 import type { ReferralInfo } from "@roulette/shared";
-
-// ── Фоновые частицы ───────────────────────────────────────────────────────────
-const DOTS = [
-  { x: 5,  y: 10, s: 1.4, d: 0.0 }, { x: 91, y: 7,  s: 1.0, d: 0.7 },
-  { x: 3,  y: 33, s: 1.8, d: 1.3 }, { x: 94, y: 28, s: 1.3, d: 0.3 },
-  { x: 7,  y: 54, s: 1.0, d: 1.9 }, { x: 93, y: 50, s: 1.7, d: 1.0 },
-  { x: 4,  y: 73, s: 1.4, d: 2.5 }, { x: 92, y: 70, s: 1.0, d: 1.6 },
-  { x: 48, y: 3,  s: 1.3, d: 0.8 }, { x: 53, y: 91, s: 1.0, d: 1.2 },
-];
+import { DiamondIcon, LinkIcon } from "@/components/ui/icons";
 
 // ── Иконка копирования ────────────────────────────────────────────────────────
 function CopyIcon({ done }: { done: boolean }) {
@@ -35,6 +28,7 @@ interface Props {
 }
 
 export function ReferralsModal({ onClose }: Props) {
+  useTgBack(onClose);
   const [info, setInfo]       = useState<ReferralInfo | null>(null);
   const [copied, setCopied]   = useState(false);
   const [showHow, setShowHow] = useState(false);
@@ -60,78 +54,62 @@ export function ReferralsModal({ onClose }: Props) {
     );
   }
 
-  const earnedDisplay = info ? info.earnedTon.toFixed(2) : "0";
-  const friendCount   = info?.referredCount ?? 0;
-  const shortLink     = info?.referralLink.replace("https://", "") ?? "t.me/RollsBot?start=…";
+  const earnedDisplay = info
+    ? parseFloat(info.earnedTon.toFixed(2)).toString()
+    : "0";
+  const friendCount = info?.referredCount ?? 0;
+  const shortLink   = info?.referralLink.replace("https://", "") ?? "t.me/…?start=…";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "var(--bg)" }}>
 
-      {/* Частицы */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        {DOTS.map((d, i) => (
-          <div key={i} className="absolute rounded-full" style={{
-            left: `${d.x}%`, top: `${d.y}%`,
-            width: d.s * 3, height: d.s * 3,
-            background: "rgba(255,255,255,0.5)",
-            animation: `particle-float ${2.8 + d.d}s ease-in-out infinite`,
-            animationDelay: `${d.d}s`,
-          }} />
-        ))}
-      </div>
-
-      {/* ── Шапка ─────────────────────────────────────────────────────────── */}
-      <div className="relative flex items-center px-4 pt-5 pb-2 shrink-0">
-        <button
-          onClick={onClose}
-          className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity active:opacity-60"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-        >
-          <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
-            <path d="M7 1L1 7l6 6" stroke="currentColor" strokeWidth="1.6"
-              strokeLinecap="round" strokeLinejoin="round"
-              style={{ color: "var(--text-dim)" }} />
-          </svg>
-        </button>
-        <span className="absolute left-1/2 -translate-x-1/2 text-[15px] font-semibold text-white">
-          Рефералы
-        </span>
-      </div>
-
       {/* ── Контент ───────────────────────────────────────────────────────── */}
-      <div className="relative flex-1 overflow-y-auto flex flex-col items-center px-4 pt-2 pb-4 gap-4">
+      <div className="relative flex-1 overflow-y-auto flex flex-col items-center px-4 pb-4 gap-4">
 
-        {/* Иконка + заголовок */}
-        <div className="flex flex-col items-center gap-2 pt-3 pb-1">
-          <div className="animate-float">
-            <span style={{ fontSize: 68, lineHeight: 1 }}>💎</span>
-          </div>
-          <div className="flex flex-col items-center gap-0.5 mt-2 text-center">
-            <p className="text-[18px] font-bold text-white leading-snug">
-              Пригласи друзей и зарабатывай
-            </p>
-            <p className="text-[18px] font-bold" style={{ color: "#4CD964" }}>
-              10% с их комиссий
-            </p>
-          </div>
+        {/* ── Diamond hero ── */}
+        <div className="relative flex items-center justify-center mt-10 mb-1">
+          {/* Outer rotating ring */}
+          <div
+            className="absolute rounded-full animate-spin-slow"
+            style={{
+              width: 108, height: 108,
+              border: "1px solid",
+              borderColor: "rgba(0,200,255,0.25) transparent rgba(0,200,255,0.1) transparent",
+            }}
+          />
+          {/* Inner glow */}
+          <div
+            className="absolute rounded-full animate-avatar-glow"
+            style={{
+              width: 80, height: 80,
+              background: "radial-gradient(circle, rgba(0,180,255,0.28), transparent 70%)",
+              filter: "blur(10px)",
+            }}
+          />
+          {/* Diamond */}
+          <span
+            className="relative z-10 animate-diamond select-none"
+            style={{ color: "#4ef2f8" }}
+          >
+            <DiamondIcon size={60} />
+          </span>
+        </div>
+
+        {/* Headline */}
+        <div className="flex flex-col items-center gap-[3px] text-center animate-fade-up">
+          <p className="text-[19px] font-bold text-white leading-snug">
+            Пригласи друзей и зарабатывай
+          </p>
+          <p className="text-[19px] font-bold" style={{ color: "#4CD964" }}>
+            10% с их комиссий
+          </p>
         </div>
 
         {/* ── Карточка заработка ── */}
         <div
-          className="relative w-full rounded-[20px] px-6 py-7 overflow-hidden animate-fade-up"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+          className="relative w-full rounded-[20px] px-6 py-6 overflow-hidden animate-fade-up"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", animationDelay: "0.06s" }}
         >
-          {/* Уголки ◇ */}
-          {(["tl","tr","bl","br"] as const).map(pos => (
-            <span key={pos} className="absolute text-[14px]" style={{
-              color: "rgba(255,255,255,0.18)",
-              ...(pos === "tl" ? { top: 10, left: 12 }  : {}),
-              ...(pos === "tr" ? { top: 10, right: 12 }  : {}),
-              ...(pos === "bl" ? { bottom: 10, left: 12 }  : {}),
-              ...(pos === "br" ? { bottom: 10, right: 12 }  : {}),
-            }}>◇</span>
-          ))}
-
           <p className="text-center text-[11px] tracking-[0.15em] uppercase mb-2"
             style={{ color: "var(--text-muted)" }}>
             Ты заработал
@@ -156,7 +134,7 @@ export function ReferralsModal({ onClose }: Props) {
               Когда друг, которого ты пригласил, играет и платит комиссию —
               ты автоматически получаешь{" "}
               <span className="text-white font-bold">10%</span> от неё в TON.
-              Без лимитов по количеству друзей.
+              Без лимитов.
             </p>
           )}
         </div>
@@ -173,22 +151,17 @@ export function ReferralsModal({ onClose }: Props) {
         {/* ── Карточка со ссылкой ── */}
         <div
           className="w-full rounded-[18px] px-4 py-3.5 flex items-center gap-3 animate-fade-up"
-          style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
-            animationDelay: "0.1s",
-          }}
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", animationDelay: "0.12s" }}
         >
-          <div className="w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0 text-[16px]"
-            style={{ background: "rgba(0,136,204,0.14)" }}>
-            💎
+          <div className="w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0"
+            style={{ background: "rgba(0,136,204,0.14)", color: "var(--accent)" }}>
+            <LinkIcon size={15} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] uppercase tracking-wide mb-0.5"
-              style={{ color: "var(--text-muted)" }}>
+            <p className="text-[10px] uppercase tracking-wide mb-0.5" style={{ color: "var(--text-muted)" }}>
               Твоя реферальная ссылка
             </p>
-            <p className="text-[13px] font-mono truncate" style={{ color: "rgba(255,255,255,0.55)" }}>
+            <p className="text-[13px] font-mono truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
               {shortLink}
             </p>
           </div>

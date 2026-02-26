@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTgBack } from "@/hooks/useTgBack";
 import { api } from "@/api/client";
 import { useStore } from "@/store/index";
 import type { TasksInfo, TaskItem, TaskStatus, TaskClaimResult } from "@roulette/shared";
+import { CoinIcon, LockIcon, TaskIcon } from "@/components/ui/icons";
 
 // ── Цвета категорий ───────────────────────────────────────────────────────────
 const CATEGORY_LABEL: Record<string, string> = {
@@ -24,25 +26,25 @@ function StatusBadge({ status, reward }: { status: TaskStatus; reward: number })
   }
   if (status === "locked") {
     return (
-      <span className="text-[11px] font-semibold px-2.5 py-1 rounded-[8px]"
+      <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-[8px]"
         style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}>
-        🔒 Скоро
+        <LockIcon size={11} /> Скоро
       </span>
     );
   }
   if (status === "claimable") {
     return (
-      <span className="text-[11px] font-bold px-2.5 py-1 rounded-[8px]"
+      <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-[8px]"
         style={{ background: "rgba(0,136,204,0.18)", color: "var(--accent)" }}>
-        +{reward.toLocaleString()} 🪙
+        +{reward.toLocaleString()} <CoinIcon size={11} />
       </span>
     );
   }
   // unclaimed
   return (
-    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-[8px]"
+    <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-[8px]"
       style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-dim)" }}>
-      +{reward.toLocaleString()} 🪙
+      +{reward.toLocaleString()} <CoinIcon size={11} />
     </span>
   );
 }
@@ -65,10 +67,13 @@ function TaskRow({ task, onClaim }: { task: TaskItem; onClaim: (id: string) => P
       style={{ opacity: dim ? 0.55 : 1, transition: "opacity .2s" }}
     >
       <div
-        className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] shrink-0"
-        style={{ background: task.status === "claimable" ? "rgba(0,136,204,0.14)" : "var(--bg-card-2)" }}
+        className="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0"
+        style={{
+          background: task.status === "claimable" ? "rgba(0,136,204,0.14)" : "var(--bg-card-2)",
+          color: task.status === "claimable" ? "var(--accent)" : "var(--text-dim)",
+        }}
       >
-        {task.icon}
+        <TaskIcon emoji={task.icon} size={20} />
       </div>
 
       <div className="flex-1 min-w-0">
@@ -100,6 +105,7 @@ interface Props {
 }
 
 export function TasksModal({ onClose }: Props) {
+  useTgBack(onClose);
   const { updateCoins } = useStore();
   const [data, setData]             = useState<TasksInfo | null>(null);
   const [activeCategory, setActive] = useState<string>("all");
@@ -133,32 +139,13 @@ export function TasksModal({ onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "var(--bg)" }}>
 
-      {/* ── Шапка ─────────────────────────────────────────────────────────── */}
-      <div className="relative flex items-center px-4 pt-5 pb-3 shrink-0">
-        <button
-          onClick={onClose}
-          className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity active:opacity-60"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-        >
-          <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
-            <path d="M7 1L1 7l6 6" stroke="currentColor" strokeWidth="1.6"
-              strokeLinecap="round" strokeLinejoin="round"
-              style={{ color: "var(--text-dim)" }} />
-          </svg>
-        </button>
-        <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-          <span className="text-[15px] font-semibold text-white">Задания</span>
-          {data && (
-            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-              {data.completedCount} / {data.totalCount}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Прогресс-бар */}
+      {/* ── Прогресс ─────────────────────────────────────────────────────── */}
       {data && (
-        <div className="px-4 pb-3 shrink-0">
+        <div className="px-4 pt-5 pb-3 shrink-0">
+          <div className="flex justify-between text-[11px] mb-1.5">
+            <span style={{ color: "var(--text-muted)" }}>Прогресс</span>
+            <span style={{ color: "var(--text-dim)" }}>{data.completedCount} / {data.totalCount}</span>
+          </div>
           <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-card-2)" }}>
             <div
               className="h-full rounded-full transition-all duration-500"
