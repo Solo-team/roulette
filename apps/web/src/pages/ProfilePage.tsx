@@ -10,93 +10,159 @@ import { useStore } from "@/store/index";
 import { api } from "@/api/client";
 import type { NftClaimResult, TasksInfo } from "@roulette/shared";
 
-// ── Частицы ──────────────────────────────────────────────────────────────────
-const DOTS = [
-  { x: 7,  y: 9,  s: 1.5, d: 0.0 }, { x: 88, y: 7,  s: 1.0, d: 0.8 },
-  { x: 4,  y: 28, s: 2.0, d: 1.4 }, { x: 93, y: 24, s: 1.5, d: 0.4 },
-  { x: 8,  y: 50, s: 1.0, d: 2.0 }, { x: 92, y: 46, s: 2.0, d: 1.1 },
-  { x: 5,  y: 70, s: 1.5, d: 2.6 }, { x: 91, y: 68, s: 1.0, d: 1.7 },
-  { x: 48, y: 4,  s: 1.5, d: 0.9 }, { x: 55, y: 88, s: 1.0, d: 1.3 },
-];
+// ── Icons ──────────────────────────────────────────────────────────────────────
 
-// ── Иконки ────────────────────────────────────────────────────────────────────
 function TonIcon({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 56 56" fill="none">
-      <circle cx="28" cy="28" r="28" fill="#0098EA"/>
-      <path d="M37.58 15.4H18.42c-3.49 0-5.67 3.79-3.92 6.79l11.5 19.52c.87 1.5 2.97 1.5 3.84 0l11.5-19.52c1.75-3-.43-6.79-3.84-6.79Z" fill="white"/>
-      <path d="M15.96 22.94 26.08 41.71c.87 1.5 2.97 1.5 3.84 0l10.12-18.77c.18.3.31.63.39.97L29.92 41.71c-.87 1.5-2.97 1.5-3.84 0L15.57 23.91c.08-.34.21-.67.39-.97Z" fill="white" fillOpacity=".5"/>
+      <circle cx="28" cy="28" r="28" fill="#0098EA" />
+      <path d="M37.58 15.4H18.42c-3.49 0-5.67 3.79-3.92 6.79l11.5 19.52c.87 1.5 2.97 1.5 3.84 0l11.5-19.52c1.75-3-.43-6.79-3.84-6.79Z" fill="white" />
     </svg>
   );
 }
 
-function WalletSvg({ size = 16 }: { size?: number }) {
+function WalletIcon({ connected }: { connected: boolean }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="6" width="20" height="14" rx="3" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M2 10h20" stroke="currentColor" strokeWidth="1.5"/>
-      <circle cx="16" cy="15" r="1.25" fill="currentColor"/>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="6" width="20" height="14" rx="3"
+        stroke={connected ? "var(--accent)" : "currentColor"} strokeWidth="1.5" />
+      <path d="M2 10h20" stroke={connected ? "var(--accent)" : "currentColor"} strokeWidth="1.5" />
+      <circle cx="16" cy="15" r="1.25"
+        fill={connected ? "var(--accent)" : "currentColor"} />
     </svg>
   );
 }
 
-// ── Countdown hook ─────────────────────────────────────────────────────────────
-function useCountdown(targetIso: string | null) {
-  const [seconds, setSeconds] = useState(0);
-  useEffect(() => {
-    if (!targetIso) return;
-    const update = () => setSeconds(Math.max(0, Math.floor((new Date(targetIso).getTime() - Date.now()) / 1000)));
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, [targetIso]);
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return { seconds, h, m, s };
-}
-function pad(n: number) { return String(n).padStart(2, "0"); }
-
-// ── Chevron ───────────────────────────────────────────────────────────────────
-function Chevron() {
+function ChevronIcon() {
   return (
-    <svg width="7" height="12" viewBox="0 0 7 12" fill="none" style={{ color: "var(--text-muted)", flexShrink: 0 }}>
-      <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width="6" height="11" viewBox="0 0 6 11" fill="none" style={{ flexShrink: 0 }}>
+      <path d="M1 1l4 4.5L1 10" stroke="currentColor" strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-// ── Разделитель ───────────────────────────────────────────────────────────────
 function Divider() {
   return <div className="h-px mx-4" style={{ background: "var(--border)" }} />;
 }
 
-// ══ ProfilePage ════════════════════════════════════════════════════════════════
-export function ProfilePage() {
-  const { profile, profileError, nfts } = useProfile();
-  const { updateCoins } = useStore();
-  const [showDonate, setShowDonate]         = useState(false);
-  const [showInventory, setShowInventory]   = useState(false);
-  const [showReferrals, setShowReferrals]   = useState(false);
-  const [showTasks, setShowTasks]           = useState(false);
-  const [tasksInfo, setTasksInfo]           = useState<TasksInfo | null>(null);
+// ── Countdown ──────────────────────────────────────────────────────────────────
 
+function useCountdown(targetIso: string | null) {
+  const [seconds, setSeconds] = useState(0);
   useEffect(() => {
-    api.get<TasksInfo>("/tasks").then(setTasksInfo).catch(() => {});
-  }, []);
-  const [tonConnectUI] = useTonConnectUI();
-  const walletAddress   = useTonAddress();
+    if (!targetIso) return;
+    const update = () =>
+      setSeconds(Math.max(0, Math.floor((new Date(targetIso).getTime() - Date.now()) / 1000)));
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [targetIso]);
+  return {
+    seconds,
+    h: Math.floor(seconds / 3600),
+    m: Math.floor((seconds % 3600) / 60),
+    s: seconds % 60,
+  };
+}
 
-  // Claim state
+function pad(n: number) { return String(n).padStart(2, "0"); }
+
+function pluralDays(n: number) {
+  if (n % 10 === 1 && n % 100 !== 11) return "день";
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return "дня";
+  return "дней";
+}
+
+// ── Row ────────────────────────────────────────────────────────────────────────
+
+interface RowProps {
+  icon: string;
+  title: string;
+  sub?: string;
+  dot?: boolean;
+  onClick?: () => void;
+  right?: React.ReactNode;
+  iconBg?: string;
+}
+
+function Row({ icon, title, sub, dot, onClick, right, iconBg }: RowProps) {
+  const isButton = !!onClick;
+  const Tag = isButton ? "button" : "div";
+
+  return (
+    <Tag
+      {...(isButton ? { onClick } : {})}
+      className={`w-full flex items-center gap-3 px-4 py-[14px] text-left${isButton ? " active:bg-white/[0.03] transition-colors" : ""}`}
+    >
+      {/* Icon */}
+      <div
+        className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[19px] shrink-0"
+        style={{ background: iconBg ?? "var(--bg-card-2)" }}
+      >
+        {icon}
+      </div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <p className="text-[14px] font-semibold text-white leading-tight">{title}</p>
+        {sub && (
+          <p className="text-[11px] mt-[3px]" style={{ color: "var(--text-dim)" }}>{sub}</p>
+        )}
+      </div>
+
+      {/* Right slot */}
+      {right}
+
+      {/* Dot indicator */}
+      {dot && (
+        <span
+          className="w-[7px] h-[7px] rounded-full shrink-0"
+          style={{ background: "var(--accent)", boxShadow: "0 0 6px rgba(0,136,204,0.7)" }}
+        />
+      )}
+
+      {/* Chevron */}
+      {isButton && (
+        <span style={{ color: "var(--text-muted)" }}>
+          <ChevronIcon />
+        </span>
+      )}
+    </Tag>
+  );
+}
+
+// ══ ProfilePage ════════════════════════════════════════════════════════════════
+
+export function ProfilePage() {
+  const { profile, profileError } = useProfile();
+  const { updateCoins } = useStore();
+
+  const [showDonate, setShowDonate]       = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
+  const [showReferrals, setShowReferrals] = useState(false);
+  const [showTasks, setShowTasks]         = useState(false);
+  const [tasksInfo, setTasksInfo]         = useState<TasksInfo | null>(null);
+
+  const [tonConnectUI] = useTonConnectUI();
+  const walletAddress  = useTonAddress();
+
   const [nextClaimAt, setNextClaimAt]   = useState<string | null>(null);
   const [claimLoading, setClaimLoading] = useState(false);
   const [justClaimed, setJustClaimed]   = useState(false);
+
   const { seconds, h, m, s } = useCountdown(nextClaimAt);
   const canClaim = seconds === 0;
 
   useEffect(() => {
+    api.get<TasksInfo>("/tasks").then(setTasksInfo).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (profile?.lastClaimAt) {
-      setNextClaimAt(new Date(new Date(profile.lastClaimAt).getTime() + 24 * 3600 * 1000).toISOString());
+      setNextClaimAt(
+        new Date(new Date(profile.lastClaimAt).getTime() + 24 * 3600 * 1000).toISOString()
+      );
     }
   }, [profile?.lastClaimAt]);
 
@@ -111,6 +177,10 @@ export function ProfilePage() {
     } catch { /* handled */ } finally { setClaimLoading(false); }
   }
 
+  function reloadTasks() {
+    api.get<TasksInfo>("/tasks").then(setTasksInfo).catch(() => {});
+  }
+
   // ── Loading / error ──────────────────────────────────────────────────────────
   if (!profile) {
     return (
@@ -119,16 +189,14 @@ export function ProfilePage() {
           {profileError ? (
             <>
               <span className="text-4xl">⚠️</span>
-              <p className="text-center px-8 text-sm" style={{ color: "var(--text-dim)" }}>
-                Не удалось подключиться к серверу.<br />Открой бота через Telegram.
+              <p className="text-sm text-center px-8" style={{ color: "var(--text-dim)" }}>
+                Не удалось подключиться.<br />Открой бота через Telegram.
               </p>
             </>
           ) : (
             <>
-              <div className="relative w-12 h-12">
-                <div className="absolute inset-0 rounded-full border-2 animate-spin"
-                  style={{ borderColor: "transparent", borderTopColor: "var(--accent)" }} />
-              </div>
+              <div className="w-10 h-10 rounded-full border-2 animate-spin"
+                style={{ borderColor: "transparent", borderTopColor: "var(--accent)" }} />
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>Загрузка...</p>
             </>
           )}
@@ -137,191 +205,152 @@ export function ProfilePage() {
     );
   }
 
-  const daysSince = Math.floor((Date.now() - new Date(profile.createdAt).getTime()) / 86400000);
-  const daysLabel = daysSince === 1 ? "день" : daysSince < 5 ? "дня" : "дней";
+  const daysSince    = Math.floor((Date.now() - new Date(profile.createdAt).getTime()) / 86400000);
+  const hasClaimable = tasksInfo?.tasks.some(t => t.status === "claimable") ?? false;
+  const tasksDone    = tasksInfo ? `${tasksInfo.completedCount} / ${tasksInfo.totalCount}` : "0 / 18";
 
   return (
     <div className="min-h-screen pb-28" style={{ background: "var(--bg)" }}>
 
-      {/* Частицы */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        {DOTS.map((d, i) => (
-          <div key={i} className="absolute rounded-full" style={{
-            left: `${d.x}%`, top: `${d.y}%`,
-            width: d.s * 3, height: d.s * 3,
-            background: "rgba(255,255,255,0.5)",
-            animation: `particle-float ${2.8 + d.d}s ease-in-out infinite`,
-            animationDelay: `${d.d}s`,
-          }} />
-        ))}
-      </div>
+      {/* ── Topbar ──────────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 pt-safe pt-5">
+        {/* Left: empty placeholder */}
+        <div className="w-9" />
 
-      {/* ── Топ-бар ─────────────────────────────────────────────────────────── */}
-      <div className="relative flex items-center justify-between px-4 pt-6 pb-2">
-        {/* Слева: каунтер монет */}
-        <div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-        >
-          <span className="text-[15px]">🪙</span>
-          <span className="text-sm font-bold text-white">{profile.coins.toLocaleString()}</span>
-        </div>
+        {/* Center: app name */}
+        <span className="text-[13px] font-bold tracking-widest uppercase" style={{ color: "var(--text-muted)" }}>
+          Rolls
+        </span>
 
-        {/* Справа: кнопка кошелька */}
+        {/* Right: wallet */}
         <button
           onClick={() => walletAddress ? tonConnectUI.disconnect() : tonConnectUI.openModal()}
-          className="w-10 h-10 rounded-full flex items-center justify-center transition-opacity active:opacity-70"
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:opacity-60"
           style={{
-            background: walletAddress ? "rgba(0,136,204,0.15)" : "var(--bg-card)",
+            background: walletAddress ? "rgba(0,136,204,0.1)" : "var(--bg-card)",
             border: `1px solid ${walletAddress ? "var(--accent-border)" : "var(--border)"}`,
             color: walletAddress ? "var(--accent)" : "var(--text-dim)",
           }}
         >
-          <WalletSvg size={17} />
+          <WalletIcon connected={!!walletAddress} />
         </button>
       </div>
 
-      {/* ── Аватар ──────────────────────────────────────────────────────────── */}
-      <div className="relative flex flex-col items-center pt-3 pb-5">
-        <div className="rounded-full p-[2.5px]" style={{ background: "rgba(255,255,255,0.18)" }}>
-          <div className="rounded-full overflow-hidden" style={{ background: "var(--bg)" }}>
-            <Avatar photoUrl={profile.photoUrl} firstName={profile.firstName} userId={profile.id} size={82} />
+      {/* ── Hero ────────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col items-center pt-6 pb-7">
+
+        {/* Avatar */}
+        <div className="relative w-[92px] h-[92px]">
+          {/* Glow */}
+          <div
+            className="absolute inset-0 rounded-full animate-avatar-glow"
+            style={{ background: "var(--accent)", filter: "blur(18px)" }}
+          />
+          {/* Ring */}
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{ border: "1.5px solid rgba(255,255,255,0.15)", zIndex: 1 }}
+          />
+          {/* Photo */}
+          <div className="relative w-full h-full rounded-full overflow-hidden" style={{ zIndex: 2 }}>
+            <Avatar
+              photoUrl={profile.photoUrl}
+              firstName={profile.firstName}
+              userId={profile.id}
+              size={92}
+            />
           </div>
         </div>
-        <p className="mt-3 text-[15px] font-semibold" style={{ color: "var(--text-dim)" }}>
+
+        {/* Name */}
+        <p
+          className="mt-4 text-[16px] font-semibold animate-count-in"
+          style={{ color: "rgba(255,255,255,0.75)", animationDelay: "0.1s" }}
+        >
           {profile.username ? `@${profile.username}` : profile.firstName}
         </p>
-      </div>
 
-      {/* ── Контент ─────────────────────────────────────────────────────────── */}
-      <div className="px-4 flex flex-col gap-3">
-
-        {/* Карточка баланса */}
+        {/* Coin balance */}
         <div
-          className="rounded-[20px] px-4 py-4 animate-fade-up"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+          className="flex items-center gap-2 mt-3 animate-count-in"
+          style={{ animationDelay: "0.18s" }}
         >
-          <p className="text-[11px] tracking-[0.15em] uppercase mb-3" style={{ color: "var(--text-muted)" }}>
-            Баланс
-          </p>
-          <div className="flex items-center gap-2">
-            {/* Левая часть: иконка + сумма */}
-            <div className="flex-1 flex items-center gap-2.5 min-w-0">
-              <TonIcon size={26} />
-              <span className="font-black text-white leading-none" style={{ fontSize: 26 }}>
-                {profile.coins.toLocaleString()}
-              </span>
-              <span className="text-sm" style={{ color: "var(--text-dim)" }}>монет</span>
-            </div>
-            {/* Правая часть: кнопки */}
-            <button
-              onClick={() => setShowDonate(true)}
-              className="flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-bold btn-primary"
-            >
-              Пополнить
-            </button>
-            <button
-              onClick={() => walletAddress ? tonConnectUI.disconnect() : tonConnectUI.openModal()}
-              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{
-                background: walletAddress ? "rgba(0,136,204,0.12)" : "var(--bg-card-2)",
-                color: walletAddress ? "var(--accent)" : "var(--text-muted)",
-              }}
-            >
-              <WalletSvg size={16} />
-            </button>
-          </div>
+          <span style={{ fontSize: 28 }}>🪙</span>
+          <span className="font-black text-white" style={{ fontSize: 36, lineHeight: 1 }}>
+            {profile.coins.toLocaleString()}
+          </span>
         </div>
 
-        {/* Список */}
-        <div
-          className="rounded-[20px] overflow-hidden animate-fade-up"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", animationDelay: "0.06s" }}
+        {/* Top-up button */}
+        <button
+          onClick={() => setShowDonate(true)}
+          className="mt-4 px-6 py-[9px] rounded-full text-[13px] font-bold btn-primary animate-count-in"
+          style={{ animationDelay: "0.26s" }}
         >
+          Пополнить
+        </button>
+      </div>
 
-          {/* Инвентарь подарков */}
-          <button
-            className="w-full flex items-center gap-3 px-4 py-[14px] active:bg-white/5 transition-colors"
+      {/* ── Cards ───────────────────────────────────────────────────────────── */}
+      <div className="px-4 flex flex-col gap-[10px]">
+
+        {/* Actions */}
+        <div
+          className="rounded-[22px] overflow-hidden animate-fade-up"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", animationDelay: "0.1s" }}
+        >
+          <Row
+            icon="🎁"
+            title="Инвентарь"
+            sub="0 предметов"
             onClick={() => setShowInventory(true)}
-          >
-            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
-              style={{ background: "var(--bg-card-2)" }}>
-              🎁
-            </div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-[14px] font-semibold text-white leading-tight">Инвентарь подарков</p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>0 предметов</p>
-            </div>
-            <Chevron />
-          </button>
-
+          />
           <Divider />
-
-          {/* Задания */}
-          <button
-            className="w-full flex items-center gap-3 px-4 py-[14px] active:bg-white/5 transition-colors"
+          <Row
+            icon="📋"
+            title="Задания"
+            sub={tasksDone}
+            dot={hasClaimable}
             onClick={() => setShowTasks(true)}
-          >
-            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
-              style={{ background: "var(--bg-card-2)" }}>
-              📋
-            </div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-[14px] font-semibold text-white leading-tight">Задания</p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>
-                {tasksInfo ? `${tasksInfo.completedCount} / ${tasksInfo.totalCount}` : "0 / 18"}
-              </p>
-            </div>
-            {tasksInfo && tasksInfo.tasks.some(t => t.status === "claimable") && (
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "var(--accent)" }} />
-            )}
-            <Chevron />
-          </button>
-
+          />
           <Divider />
-
-          {/* Рефералы */}
-          <button
-            className="w-full flex items-center gap-3 px-4 py-[14px] active:bg-white/5 transition-colors"
+          <Row
+            icon="💎"
+            title="Рефералы"
+            sub="10% с каждого друга"
             onClick={() => setShowReferrals(true)}
-          >
-            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
-              style={{ background: "var(--bg-card-2)" }}>
-              💎
-            </div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-[14px] font-semibold text-white leading-tight">Рефералы</p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>Зарабатывай 10% с друзей</p>
-            </div>
-            <Chevron />
-          </button>
+          />
+        </div>
 
-          <Divider />
-
-          {/* Ежедневный клейм */}
+        {/* Status */}
+        <div
+          className="rounded-[22px] overflow-hidden animate-fade-up"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", animationDelay: "0.18s" }}
+        >
+          {/* Daily claim */}
           <div className="flex items-center gap-3 px-4 py-[14px]">
             <div
-              className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
-              style={{ background: canClaim ? "rgba(0,136,204,0.18)" : "var(--bg-card-2)" }}
+              className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[19px] shrink-0"
+              style={{ background: canClaim ? "rgba(0,136,204,0.13)" : "var(--bg-card-2)" }}
             >
               {justClaimed ? "✨" : canClaim ? "🎁" : "⏳"}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-semibold text-white leading-tight">Ежедневный клейм</p>
               {!canClaim && !justClaimed ? (
-                <p className="text-xs font-mono mt-0.5" style={{ color: "var(--accent)" }}>
+                <p className="text-[11px] font-mono mt-[3px]" style={{ color: "var(--accent)" }}>
                   {pad(h)}:{pad(m)}:{pad(s)}
                 </p>
               ) : (
-                <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>+100 монет</p>
+                <p className="text-[11px] mt-[3px]" style={{ color: "var(--text-dim)" }}>+100 монет</p>
               )}
             </div>
             <button
               onClick={handleClaim}
               disabled={!canClaim || claimLoading}
-              className="flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-35"
+              className={`shrink-0 px-3.5 py-[7px] rounded-[10px] text-[12px] font-bold transition-all disabled:opacity-35${canClaim && !claimLoading ? " animate-pulse-accent" : ""}`}
               style={canClaim
-                ? { background: "var(--accent)", color: "#fff", boxShadow: "0 3px 10px rgba(0,136,204,0.3)" }
+                ? { background: "var(--accent)", color: "#fff" }
                 : { background: "var(--bg-card-2)", color: "var(--text-dim)" }
               }
             >
@@ -331,41 +360,32 @@ export function ProfilePage() {
 
           <Divider />
 
-          {/* В игре */}
-          <div className="flex items-center gap-3 px-4 py-[14px]">
-            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[20px] flex-shrink-0"
-              style={{ background: "var(--bg-card-2)" }}>
-              🔥
-            </div>
-            <div className="flex-1">
-              <p className="text-[14px] font-semibold text-white leading-tight">В игре</p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>{daysSince} {daysLabel}</p>
-            </div>
-          </div>
+          {/* Days in game */}
+          <Row
+            icon="🔥"
+            title="В игре"
+            sub={`${daysSince} ${pluralDays(daysSince)}`}
+          />
 
           <Divider />
 
-          {/* TON донат */}
-          <div className="flex items-center gap-3 px-4 py-[14px]">
-            <div className="w-10 h-10 rounded-[12px] flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(0,136,204,0.12)" }}>
-              <TonIcon size={24} />
-            </div>
-            <div className="flex-1">
-              <p className="text-[14px] font-semibold text-white leading-tight">TON донат</p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>
-                {profile.totalDonatedTon.toFixed(2)} TON
-              </p>
-            </div>
-          </div>
+          {/* TON donated */}
+          <Row
+            icon="💙"
+            title="TON донат"
+            sub={`${profile.totalDonatedTon.toFixed(2)} TON`}
+            iconBg="rgba(0,136,204,0.1)"
+          />
         </div>
-
       </div>
 
+      {/* ── Modals ──────────────────────────────────────────────────────────── */}
       {showDonate    && <DonateModal    onClose={() => setShowDonate(false)} />}
       {showInventory && <InventoryModal onClose={() => setShowInventory(false)} />}
       {showReferrals && <ReferralsModal onClose={() => setShowReferrals(false)} />}
-      {showTasks     && <TasksModal     onClose={() => { setShowTasks(false); api.get<TasksInfo>("/tasks").then(setTasksInfo).catch(() => {}); }} />}
+      {showTasks     && (
+        <TasksModal onClose={() => { setShowTasks(false); reloadTasks(); }} />
+      )}
     </div>
   );
 }

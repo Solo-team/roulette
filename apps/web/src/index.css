@@ -7,6 +7,7 @@
   --accent:        #0088CC;
   --accent-dim:    rgba(0,136,204,0.12);
   --accent-border: rgba(0,136,204,0.22);
+  --gold:          #F5C842;
   --bg:            #09090f;
   --bg-card:       rgba(255,255,255,0.04);
   --bg-card-2:     rgba(255,255,255,0.06);
@@ -70,6 +71,18 @@ input[type=number] { -moz-appearance: textfield; }
   0%, 100% { transform: translateY(0px) scale(1);    opacity: 0.25; }
   50%       { transform: translateY(-7px) scale(1.3); opacity: 0.6; }
 }
+@keyframes avatar-glow {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50%       { opacity: 0.55; transform: scale(1.08); }
+}
+@keyframes pulse-accent {
+  0%, 100% { box-shadow: 0 3px 14px rgba(0,136,204,0.32); }
+  50%       { box-shadow: 0 3px 28px rgba(0,136,204,0.65); }
+}
+@keyframes count-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 /* ── Utility ────────────────────────────────────────────────────────────── */
 .animate-fade-up   { animation: fade-up  0.45s cubic-bezier(.16,1,.3,1) both; }
@@ -84,6 +97,10 @@ input[type=number] { -moz-appearance: textfield; }
 .delay-3 { animation-delay: 0.24s; }
 .delay-4 { animation-delay: 0.32s; }
 .delay-5 { animation-delay: 0.40s; }
+
+.animate-avatar-glow  { animation: avatar-glow  3.5s ease-in-out infinite; }
+.animate-pulse-accent { animation: pulse-accent 2.2s ease-in-out infinite; }
+.animate-count-in     { animation: count-in    0.5s cubic-bezier(.16,1,.3,1) both; }
 
 /* ── Glass card ─────────────────────────────────────────────────────────── */
 .glass {
