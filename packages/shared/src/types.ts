@@ -101,6 +101,18 @@ export interface ReferralInfo {
   referralLink: string;   // полная ссылка https://t.me/Bot?start=123
 }
 
+// ─── Shop / Unique gift NFTs (secondary marketplace) ─────────────────────────
+
+export interface UniqueGiftItem {
+  address: string;           // NFT contract address
+  name: string;              // e.g. "Candy Cane #200731"
+  collectionName: string;    // e.g. "Candy Canes"
+  thumbnailUrl: string | null;
+  priceTon: number;          // price in TON
+  attributes: Array<{ trait_type: string; value: string }>;
+  getgemsUrl: string;        // link to buy on Getgems
+}
+
 // ─── Shop / Gifts catalog ─────────────────────────────────────────────────────
 
 export interface ShopGiftItem {
@@ -109,6 +121,7 @@ export interface ShopGiftItem {
   emoji: string | null;     // Sticker emoji fallback
   thumbnailUrl: string | null; // Resolved download URL
   starCount: number;        // Price in Telegram Stars
+  upgradeStarCount: number; // Stars needed to upgrade to unique NFT
   isLimited: boolean;
   totalCount?: number;
   remainingCount?: number;

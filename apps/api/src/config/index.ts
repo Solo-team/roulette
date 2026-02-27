@@ -23,5 +23,5 @@ export const config = {
 // Fail fast: обязательные переменные в проде
 if (isProd) {
   if (!config.webhookSecret) throw new Error("WEBHOOK_SECRET required in production");
-  if (!config.donationWallet) throw new Error("DONATION_WALLET required in production");
+  if (!config.donationWallet) console.warn("DONATION_WALLET not set — TON donation verification disabled");
 }

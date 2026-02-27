@@ -88,7 +88,9 @@ export class GiftsService {
 
     // Resolve thumbnails in parallel (limit concurrency to avoid rate limiting)
     const BATCH = 5;
-    const gifts = data.result.gifts;
+    // Только коллекционные подарки — те, что можно апгрейдить до уникального NFT.
+    // Обычные подарки (без upgrade_star_count) не показываем.
+    const gifts = data.result.gifts.filter((g) => g.upgrade_star_count != null);
     const items: ShopGiftItem[] = [];
 
     for (let i = 0; i < gifts.length; i += BATCH) {
@@ -108,6 +110,7 @@ export class GiftsService {
             emoji: g.sticker.emoji ?? null,
             thumbnailUrl,
             starCount: g.star_count,
+            upgradeStarCount: g.upgrade_star_count!, // всегда присутствует после фильтра
             isLimited: g.total_count != null,
             totalCount: g.total_count,
             remainingCount: g.remaining_count,

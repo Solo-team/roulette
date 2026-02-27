@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
-import { CartIcon, MagnifyingGlassIcon, StarIcon } from "@/components/ui/icons";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { MagnifyingGlassIcon } from "@/components/ui/icons";
 import { api } from "@/api/client";
-import type { ShopGiftItem } from "@roulette/shared";
+import type { UniqueGiftItem } from "@roulette/shared";
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
+// ── Search icon ───────────────────────────────────────────────────────────────
 
 function SearchIcon() {
   return (
@@ -14,80 +14,80 @@ function SearchIcon() {
   );
 }
 
-// ── Gift Card ─────────────────────────────────────────────────────────────────
+// ── Gift card ─────────────────────────────────────────────────────────────────
 
 interface GiftCardProps {
-  gift: ShopGiftItem;
-  inCart: boolean;
-  onAdd: () => void;
+  gift: UniqueGiftItem;
 }
 
-function GiftCard({ gift, inCart, onAdd }: GiftCardProps) {
+function GiftCard({ gift }: GiftCardProps) {
+  const [imgError, setImgError] = useState(false);
+
+  // Extract number from name e.g. "Candy Cane #200731" → "#200731"
+  const match = gift.name.match(/#(\d+)$/);
+  const itemNumber = match ? `#${match[1]}` : null;
+  const baseName = itemNumber ? gift.name.replace(/#\d+$/, "").trim() : gift.name;
+
+  const priceLabel =
+    gift.priceTon % 1 === 0
+      ? `${gift.priceTon} TON`
+      : `${gift.priceTon.toFixed(2)} TON`;
+
   return (
-    <div
+    <a
+      href={gift.getgemsUrl}
+      target="_blank"
+      rel="noopener noreferrer"
       className="rounded-[18px] overflow-hidden flex flex-col"
       style={{
         background: "rgba(255,255,255,0.04)",
         border: "1px solid rgba(255,255,255,0.07)",
+        textDecoration: "none",
       }}
     >
-      {/* Image / emoji preview */}
+      {/* Thumbnail */}
       <div
         className="relative flex items-center justify-center"
         style={{ aspectRatio: "1 / 1", background: "rgba(255,255,255,0.03)" }}
       >
-        {gift.thumbnailUrl ? (
+        {gift.thumbnailUrl && !imgError ? (
           <img
             src={gift.thumbnailUrl}
             alt={gift.name}
-            className="w-full h-full object-contain p-2"
+            className="w-full h-full object-contain p-1.5"
+            onError={() => setImgError(true)}
           />
         ) : (
-          <span className="select-none" style={{ fontSize: 40, lineHeight: 1 }}>
-            {gift.emoji ?? "🎁"}
+          <span className="select-none" style={{ fontSize: 36, lineHeight: 1 }}>
+            🎁
           </span>
         )}
 
-        {/* Limited badge */}
-        {gift.isLimited && (
-          <span
-            className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-            style={{ background: "linear-gradient(135deg,#f5c842,#c8960c)", color: "#fff" }}
-          >
-            LTD
-          </span>
-        )}
+        {/* TON price badge bottom-left */}
+        <span
+          className="absolute bottom-1.5 left-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+          style={{
+            background: "rgba(0,136,204,0.85)",
+            color: "#fff",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          {priceLabel}
+        </span>
       </div>
 
       {/* Info */}
-      <div className="px-2.5 pt-2 pb-2.5 flex flex-col gap-1">
-        <p className="text-[12px] font-semibold text-white leading-tight truncate">{gift.name}</p>
-
-        {gift.isLimited && gift.remainingCount != null && (
-          <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
-            Осталось {gift.remainingCount.toLocaleString()}
+      <div className="px-2.5 pt-1.5 pb-2 flex flex-col gap-0.5">
+        <p className="text-[11px] font-semibold text-white leading-tight truncate">
+          {baseName}
+        </p>
+        {itemNumber && (
+          <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+            {itemNumber}
           </p>
         )}
-
-        {/* Price + Add */}
-        <div className="flex items-center justify-between mt-0.5">
-          <div className="flex items-center gap-1">
-            <StarIcon size={12} />
-            <span className="text-[12px] font-bold text-white">{gift.starCount}</span>
-          </div>
-          <button
-            onClick={onAdd}
-            className="w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90 text-sm font-bold"
-            style={{
-              background: inCart ? "rgba(0,136,204,0.25)" : "var(--accent)",
-              color: "#fff",
-            }}
-          >
-            {inCart ? "✓" : "+"}
-          </button>
-        </div>
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -97,80 +97,107 @@ function SkeletonCard() {
   return (
     <div
       className="rounded-[18px] overflow-hidden flex flex-col animate-pulse"
-      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+      style={{
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.07)",
+      }}
     >
       <div style={{ aspectRatio: "1/1", background: "rgba(255,255,255,0.05)" }} />
-      <div className="px-2.5 pt-2 pb-2.5 flex flex-col gap-2">
-        <div className="h-3 rounded-full w-3/4" style={{ background: "rgba(255,255,255,0.08)" }} />
-        <div className="h-3 rounded-full w-1/2" style={{ background: "rgba(255,255,255,0.05)" }} />
+      <div className="px-2.5 pt-1.5 pb-2 flex flex-col gap-1.5">
+        <div
+          className="h-2.5 rounded-full w-3/4"
+          style={{ background: "rgba(255,255,255,0.08)" }}
+        />
+        <div
+          className="h-2.5 rounded-full w-1/3"
+          style={{ background: "rgba(255,255,255,0.05)" }}
+        />
       </div>
     </div>
+  );
+}
+
+// ── Filter pill ───────────────────────────────────────────────────────────────
+
+function Pill({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all active:scale-95"
+      style={{
+        background: active ? "var(--accent)" : "rgba(255,255,255,0.07)",
+        color: active ? "#fff" : "rgba(255,255,255,0.55)",
+        border: active ? "1px solid transparent" : "1px solid rgba(255,255,255,0.1)",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
 // ══ ShopPage ══════════════════════════════════════════════════════════════════
 
 export function ShopPage() {
-  const [gifts, setGifts] = useState<ShopGiftItem[]>([]);
+  const [gifts, setGifts] = useState<UniqueGiftItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [showLimited, setShowLimited] = useState(false);
-  const [cart, setCart] = useState<Set<string>>(new Set());
+  const [activeCollection, setActiveCollection] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<ShopGiftItem[]>("/shop/gifts")
+    api
+      .get<UniqueGiftItem[]>("/shop/unique-gifts")
       .then(setGifts)
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
+  // Top 8 collections by item count
+  const collections = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const g of gifts) {
+      counts.set(g.collectionName, (counts.get(g.collectionName) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name]) => name);
+  }, [gifts]);
+
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return gifts.filter((g) => {
-      const matchSearch = g.name.toLowerCase().includes(q);
-      const matchLimited = !showLimited || g.isLimited;
-      return matchSearch && matchLimited;
-    });
-  }, [gifts, search, showLimited]);
+    let result = gifts;
+    if (activeCollection) {
+      result = result.filter((g) => g.collectionName === activeCollection);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (g) =>
+          g.name.toLowerCase().includes(q) ||
+          g.collectionName.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [gifts, activeCollection, search]);
 
-  function toggleCart(id: string) {
-    setCart((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  const cartCount = cart.size;
+  const clearSearch = useCallback(() => setSearch(""), []);
 
   return (
     <div className="min-h-screen pb-28" style={{ background: "var(--bg)" }}>
 
       {/* Header */}
       <div className="px-4 pt-10 pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-black text-white tracking-tight">Магазин</h1>
-            <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-              Подарки Telegram
-            </p>
-          </div>
-
-          {cartCount > 0 && (
-            <div
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full animate-scale-in"
-              style={{
-                background: "rgba(0,136,204,0.15)",
-                border: "1px solid rgba(0,136,204,0.3)",
-                color: "var(--accent)",
-              }}
-            >
-              <CartIcon size={16} />
-              <span className="text-sm font-bold">{cartCount}</span>
-            </div>
-          )}
-        </div>
+        <h1 className="text-xl font-black text-white tracking-tight">Магазин</h1>
+        <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+          Уникальные NFT-подарки · Getgems
+        </p>
       </div>
 
       {/* Search */}
@@ -187,74 +214,74 @@ export function ShopPage() {
           </span>
           <input
             type="text"
-            placeholder="Поиск гифта"
+            placeholder="Поиск коллекции"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/25"
           />
           {search && (
-            <button onClick={() => setSearch("")} className="text-white/30 text-lg leading-none">
+            <button
+              onClick={clearSearch}
+              className="text-white/30 text-lg leading-none"
+            >
               ×
             </button>
           )}
         </div>
       </div>
 
-      {/* Filter chips */}
-      <div className="px-4 mb-4 flex items-center gap-2">
-        <button
-          onClick={() => setShowLimited((v) => !v)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-          style={{
-            background: showLimited ? "rgba(245,200,66,0.15)" : "rgba(255,255,255,0.06)",
-            border: `1px solid ${showLimited ? "rgba(245,200,66,0.4)" : "rgba(255,255,255,0.08)"}`,
-            color: showLimited ? "#f5c842" : "rgba(255,255,255,0.55)",
-          }}
-        >
-          <span
-            className="text-[9px] font-bold px-1 rounded-full"
-            style={{
-              background: showLimited ? "#f5c842" : "rgba(255,255,255,0.15)",
-              color: showLimited ? "#000" : "rgba(255,255,255,0.5)",
-            }}
-          >
-            LTD
-          </span>
-          Лимитированные
-        </button>
-      </div>
+      {/* Collection filter pills */}
+      {!loading && collections.length > 0 && (
+        <div className="px-4 mb-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          <Pill
+            label="Все"
+            active={activeCollection === null}
+            onClick={() => setActiveCollection(null)}
+          />
+          {collections.map((name) => (
+            <Pill
+              key={name}
+              label={name}
+              active={activeCollection === name}
+              onClick={() =>
+                setActiveCollection(activeCollection === name ? null : name)
+              }
+            />
+          ))}
+        </div>
+      )}
 
       {/* Count */}
       <div className="px-4 mb-3">
         <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.25)" }}>
-          {loading ? "Загрузка…" : `${filtered.length} подарков`}
+          {loading ? "Загрузка…" : `${filtered.length} лотов`}
         </p>
       </div>
 
-      {/* Gift grid */}
+      {/* Grid */}
       {loading ? (
         <div className="px-4 grid grid-cols-3 gap-2.5">
-          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: 9 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       ) : filtered.length > 0 ? (
         <div className="px-4 grid grid-cols-3 gap-2.5">
           {filtered.map((gift, i) => (
             <div
-              key={gift.id}
+              key={gift.address}
               className="animate-fade-up"
-              style={{ animationDelay: `${Math.min(i * 0.04, 0.4)}s` }}
+              style={{ animationDelay: `${Math.min(i * 0.03, 0.4)}s` }}
             >
-              <GiftCard
-                gift={gift}
-                inCart={cart.has(gift.id)}
-                onAdd={() => toggleCart(gift.id)}
-              />
+              <GiftCard gift={gift} />
             </div>
           ))}
         </div>
       ) : (
         <div className="flex flex-col items-center gap-3 py-20">
-          <span style={{ color: "rgba(255,255,255,0.12)" }}><MagnifyingGlassIcon size={56} /></span>
+          <span style={{ color: "rgba(255,255,255,0.12)" }}>
+            <MagnifyingGlassIcon size={56} />
+          </span>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>
             Ничего не найдено
           </p>

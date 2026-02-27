@@ -1,4 +1,4 @@
-{$DOMAIN} {
+{$DOMAIN::80} {
     reverse_proxy api:3001
 
     # Заголовки безопасности
