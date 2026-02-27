@@ -3,6 +3,7 @@ import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { LeaderboardPage } from "@/pages/LeaderboardPage";
 import { ShopPage } from "@/pages/ShopPage";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const MANIFEST_URL = "https://roulette-kz79.vercel.app/tonconnect-manifest.json";
 
@@ -39,11 +40,13 @@ export function App() {
   return (
     <TonConnectUIProvider manifestUrl={MANIFEST_URL}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<ProfilePage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/shop" element={<ShopPage />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<ProfilePage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/shop" element={<ShopPage />} />
+          </Routes>
+        </ErrorBoundary>
 
         {/* Bottom nav */}
         <nav

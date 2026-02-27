@@ -7,8 +7,9 @@ services:
       POSTGRES_USER: roulette
       POSTGRES_PASSWORD: roulette
       POSTGRES_DB: roulette
-    ports:
-      - "5432:5432"
+    # В проде НЕ открываем порт наружу — только внутри сети
+    expose:
+      - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,18 +27,38 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "3001:3001"
+    # Порт не пробрасываем наружу — только через caddy внутри сети
+    expose:
+      - "3001"
     environment:
-      DATABASE_URL: postgresql://roulette:roulette@postgres:5432/roulette
+      DATABASE_URL: postgresql://roulette:roulette@postgres:5432/roulette?connection_limit=10&pool_timeout=10
       BOT_TOKEN: ${BOT_TOKEN}
       BOT_USERNAME: ${BOT_USERNAME:-}
       WEBHOOK_URL: ${WEBHOOK_URL}
-      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-roulette-webhook-secret}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET}
       TON_API_KEY: ${TON_API_KEY:-}
-      WEB_APP_URL: ${WEB_APP_URL:-http://localhost:5173}
+      WEB_APP_URL: ${WEB_APP_URL}
+      DONATION_WALLET: ${DONATION_WALLET}
+      DOMAIN: ${DOMAIN}
       PORT: 3001
       NODE_ENV: production
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: roulette-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:

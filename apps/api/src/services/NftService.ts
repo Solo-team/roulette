@@ -5,9 +5,35 @@ import { prisma } from "../lib/prisma.js";
 const CLAIM_REWARD = 100;
 const CLAIM_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
-// Простой in-memory кэш (address → { data, expiry })
-const cache = new Map<string, { data: NftItem[]; expiry: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_MAX_SIZE = 500;
+
+// LRU-кеш с ограничением размера — предотвращает утечку памяти при большом числе кошельков.
+// Map в JS сохраняет порядок вставки, поэтому итерация идёт от старых к новым.
+class LRUCache {
+  private map = new Map<string, { data: NftItem[]; expiry: number }>();
+
+  get(key: string): NftItem[] | null {
+    const entry = this.map.get(key);
+    if (!entry) return null;
+    if (entry.expiry < Date.now()) { this.map.delete(key); return null; }
+    // Перемещаем в конец (most recently used)
+    this.map.delete(key);
+    this.map.set(key, entry);
+    return entry.data;
+  }
+
+  set(key: string, data: NftItem[]): void {
+    // Вытесняем oldest при переполнении
+    if (this.map.size >= CACHE_MAX_SIZE) {
+      const oldest = this.map.keys().next().value;
+      if (oldest !== undefined) this.map.delete(oldest);
+    }
+    this.map.set(key, { data, expiry: Date.now() + CACHE_TTL_MS });
+  }
+}
+
+const cache = new LRUCache();
 
 function isGetgems(meta: { marketplace?: string; external_url?: string } | undefined): boolean {
   if (!meta) return false;
@@ -20,7 +46,7 @@ function isGetgems(meta: { marketplace?: string; external_url?: string } | undef
 export class NftService {
   static async getNfts(walletAddress: string): Promise<NftItem[]> {
     const cached = cache.get(walletAddress);
-    if (cached && cached.expiry > Date.now()) return cached.data;
+    if (cached) return cached;
 
     const url = `https://tonapi.io/v2/accounts/${walletAddress}/nfts?limit=100&indirect_ownership=true`;
     const res = await fetch(url, {
@@ -62,7 +88,7 @@ export class NftService {
         };
       });
 
-    cache.set(walletAddress, { data: items, expiry: Date.now() + CACHE_TTL_MS });
+    cache.set(walletAddress, items);
     return items;
   }
 

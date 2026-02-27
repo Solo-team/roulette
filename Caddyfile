@@ -1,0 +1,17 @@
+{$DOMAIN} {
+    reverse_proxy api:3001
+
+    # Заголовки безопасности
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+
+    # Логи в stdout (подхватывает docker logs)
+    log {
+        output stdout
+        format json
+    }
+}

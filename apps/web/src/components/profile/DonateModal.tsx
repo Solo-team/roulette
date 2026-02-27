@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
 import { useTgBack } from "@/hooks/useTgBack";
 import { useTonConnectUI, useTonAddress } from "@tonconnect/ui-react";
+import { Cell } from "@ton/core";
 import { api } from "@/api/client";
 import type { StarsInvoiceResponse } from "@roulette/shared";
 import { PencilIcon } from "@/components/ui/icons";
+
+/** Извлекает hex-хеш транзакции из base64-encoded BOC, который возвращает TonConnect. */
+function bocToTxHash(boc: string): string {
+  return Cell.fromBase64(boc).hash().toString("hex");
+}
 
 interface DonateModalProps {
   onClose: () => void;
@@ -123,7 +129,8 @@ export function DonateModal({ onClose }: DonateModalProps) {
           amount: String(Math.round(numAmount * 1e9)),
         }],
       });
-      await api.post("/donate/ton", { txHash: tx.boc, amount });
+      const txHash = bocToTxHash(tx.boc);
+      await api.post("/donate/ton", { txHash, amount });
       onClose();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);

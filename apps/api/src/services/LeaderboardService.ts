@@ -8,6 +8,7 @@ export class LeaderboardService {
     const real = await prisma.user.findMany({
       orderBy: { coins: "desc" },
       take: BOARD_SIZE,
+      select: { id: true, username: true, firstName: true, photoUrl: true, coins: true },
     });
 
     const entries: LeaderboardEntry[] = real.map((u) => ({

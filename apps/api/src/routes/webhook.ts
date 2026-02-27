@@ -202,17 +202,28 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
         const { invoice_payload } = update.message.successful_payment;
         const userId = update.message.from.id;
 
-        try {
-          await PaymentService.confirmStarsPayment(userId, invoice_payload);
+        // Идемпотентность: пропускаем, если update уже обработан
+        const alreadyProcessed = await prisma.processedUpdate.findUnique({
+          where: { updateId: BigInt(update.update_id) },
+        });
 
-          // Уведомляем пользователя
-          const stars = Number(invoice_payload.replace("stars_", ""));
-          await tgCall("sendMessage", {
-            chat_id: update.message.chat.id,
-            text: `✨ Спасибо за донат! Зачислено ${stars * 10} монет на твой счёт.`,
-          });
-        } catch (err) {
-          app.log.error({ err }, "Failed to confirm Stars payment");
+        if (!alreadyProcessed) {
+          try {
+            // Сначала помечаем update как обрабатываемый, затем начисляем
+            await prisma.processedUpdate.create({
+              data: { updateId: BigInt(update.update_id) },
+            });
+            await PaymentService.confirmStarsPayment(userId, invoice_payload);
+
+            // Уведомляем пользователя
+            const stars = Number(invoice_payload.replace("stars_", ""));
+            await tgCall("sendMessage", {
+              chat_id: update.message.chat.id,
+              text: `✨ Спасибо за донат! Зачислено ${stars * 10} монет на твой счёт.`,
+            });
+          } catch (err) {
+            app.log.error({ err, updateId: update.update_id, userId }, "Failed to confirm Stars payment");
+          }
         }
 
         return reply.send({ ok: true });

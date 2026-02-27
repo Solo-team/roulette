@@ -24,6 +24,8 @@ model User {
   gifts            Gift[]
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+
+  @@index([coins(sort: Desc)])
 }
 
 /// Telegram-гифт, отправленный пользователем на профиль бота
@@ -56,4 +58,18 @@ model BotUser {
   name      String
   coins     Int
   avatarUrl String
+}
+
+/// Обработанные TON-транзакции (идемпотентность + защита от повторных зачислений)
+model ProcessedTx {
+  txHash    String   @id
+  userId    BigInt
+  amountTon Float
+  createdAt DateTime @default(now())
+}
+
+/// Обработанные Telegram update_id (идемпотентность Stars-платежей)
+model ProcessedUpdate {
+  updateId  BigInt   @id
+  createdAt DateTime @default(now())
 }
