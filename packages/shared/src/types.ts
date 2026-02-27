@@ -10,6 +10,7 @@ export interface UserProfile {
   walletAddress: string | null;
   lastClaimAt: string | null;  // ISO 8601
   createdAt: string;
+  giftCount: number;
 }
 
 // ─── Leaderboard ─────────────────────────────────────────────────────────────
@@ -21,6 +22,18 @@ export interface LeaderboardEntry {
   firstName: string;
   photoUrl: string | null;
   coins: number;
+}
+
+// ─── Inventory (Telegram Gifts) ───────────────────────────────────────────────
+
+export interface GiftInventoryItem {
+  id: string;
+  tgGiftId: string;
+  thumbnailUrl: string | null;   // URL превью стикера
+  emoji: string | null;          // emoji fallback
+  starCount: number;
+  isUpgraded: boolean;
+  receivedAt: string;            // ISO 8601
 }
 
 // ─── NFT ─────────────────────────────────────────────────────────────────────
@@ -86,6 +99,19 @@ export interface ReferralInfo {
   referredCount: number;
   earnedTon: number;
   referralLink: string;   // полная ссылка https://t.me/Bot?start=123
+}
+
+// ─── Shop / Gifts catalog ─────────────────────────────────────────────────────
+
+export interface ShopGiftItem {
+  id: string;               // Telegram gift id
+  name: string;             // Derived from sticker set_name (e.g. "Lunar Snake")
+  emoji: string | null;     // Sticker emoji fallback
+  thumbnailUrl: string | null; // Resolved download URL
+  starCount: number;        // Price in Telegram Stars
+  isLimited: boolean;
+  totalCount?: number;
+  remainingCount?: number;
 }
 
 // ─── API helpers ─────────────────────────────────────────────────────────────

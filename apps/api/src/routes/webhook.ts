@@ -5,6 +5,7 @@
  *  - /start               → кнопка "Открыть рулетку" (WebApp)
  *  - pre_checkout_query   → мгновенное подтверждение (обязательно)
  *  - successful_payment   → начисляем монеты за Stars
+ *  - message.gift         → сохраняем Telegram-гифт в инвентарь пользователя
  */
 
 import type { FastifyPluginAsync } from "fastify";
@@ -23,6 +24,20 @@ async function tgCall(method: string, body: unknown): Promise<void> {
   });
 }
 
+/** Резолвит file_id → прямой URL скачивания через Bot API */
+async function resolveFileUrl(fileId: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://api.telegram.org/bot${config.botToken}/getFile?file_id=${fileId}`
+    );
+    const data = (await res.json()) as { ok: boolean; result?: { file_path?: string } };
+    if (data.ok && data.result?.file_path) {
+      return `https://api.telegram.org/file/bot${config.botToken}/${data.result.file_path}`;
+    }
+  } catch { /* игнорируем, вернём null */ }
+  return null;
+}
+
 // ── Types (минимальный subset Telegram Update) ────────────────────────────────
 
 interface TgFrom {
@@ -30,11 +45,42 @@ interface TgFrom {
   first_name: string;
   username?: string;
 }
+
+// Telegram Gift types (Bot API 8.x)
+interface TgPhotoSize {
+  file_id: string;
+  file_unique_id: string;
+  width: number;
+  height: number;
+  file_size?: number;
+}
+interface TgSticker {
+  file_id: string;
+  file_unique_id: string;
+  emoji?: string;
+  thumbnail?: TgPhotoSize;
+}
+interface TgGiftObj {
+  id: string;
+  sticker: TgSticker;
+  star_count: number;
+  upgrade_star_count?: number;
+  total_count?: number;
+  remaining_count?: number;
+}
+interface TgMessageGift {
+  gift: TgGiftObj;
+  is_private?: boolean;
+  star_count?: number;
+  text?: string;
+}
+
 interface TgMessage {
   message_id: number;
   chat: { id: number };
   from?: TgFrom;
   text?: string;
+  gift?: TgMessageGift;
   successful_payment?: {
     invoice_payload: string;
     currency: string;
@@ -103,6 +149,37 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
                 web_app: { url: config.webAppUrl },
               },
             ]],
+          },
+        });
+
+        return reply.send({ ok: true });
+      }
+
+      // ── message.gift ─────────────────────────────────────────────────────────
+      // Пользователь отправил Telegram-гифт на профиль бота → сохраняем в инвентарь
+      if (update.message?.gift && update.message.from) {
+        const from = update.message.from;
+        const msgGift = update.message.gift;
+        const giftObj = msgGift.gift;
+
+        // Убеждаемся, что пользователь существует в БД
+        await prisma.user.upsert({
+          where: { id: BigInt(from.id) },
+          create: { id: BigInt(from.id), firstName: from.first_name, username: from.username ?? null },
+          update: {},
+        });
+
+        // Резолвим превью стикера (thumbnail или сам стикер)
+        const thumbFileId = giftObj.sticker.thumbnail?.file_id ?? giftObj.sticker.file_id;
+        const thumbnailUrl = await resolveFileUrl(thumbFileId);
+
+        await prisma.gift.create({
+          data: {
+            userId:      BigInt(from.id),
+            tgGiftId:    giftObj.id,
+            thumbnailUrl,
+            emoji:       giftObj.sticker.emoji ?? null,
+            starCount:   msgGift.star_count ?? giftObj.star_count,
           },
         });
 

@@ -1,61 +1,9 @@
-import { useState, useMemo, useRef, useEffect } from "react";
-import { CartIcon, MagnifyingGlassIcon } from "@/components/ui/icons";
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface GiftItem {
-  id: number;
-  name: string;
-  number: number;
-  price: number;
-  type: string;
-  skin: string;
-  bg: string;
-  bgGradient: string;
-  accentColor: string;
-  emoji: string;
-}
-
-// ── Mock data ─────────────────────────────────────────────────────────────────
-
-const GIFTS: GiftItem[] = [
-  { id: 1,  name: "Lunar Snake",    number: 93669,  price: 5,  type: "Змея",      skin: "Лунный",     bg: "Полночь",   bgGradient: "linear-gradient(145deg,#0d1b4b,#1a2a7a)", accentColor: "#4e6ef2", emoji: "🐍" },
-  { id: 2,  name: "Lunar Snake",    number: 144784, price: 5,  type: "Змея",      skin: "Лунный",     bg: "Сапфир",    bgGradient: "linear-gradient(145deg,#0d2b4b,#0d4a8a)", accentColor: "#3a8ef2", emoji: "🐍" },
-  { id: 3,  name: "Lunar Snake",    number: 190498, price: 5,  type: "Змея",      skin: "Лунный",     bg: "Фиолет",    bgGradient: "linear-gradient(145deg,#1e0d4b,#3d1a7a)", accentColor: "#9b4ef2", emoji: "🐍" },
-  { id: 4,  name: "Lunar Snake",    number: 71032,  price: 5,  type: "Змея",      skin: "Лунный",     bg: "Полночь",   bgGradient: "linear-gradient(145deg,#0d1b4b,#1a2a7a)", accentColor: "#4e6ef2", emoji: "🐍" },
-  { id: 5,  name: "Lunar Snake",    number: 190495, price: 5,  type: "Змея",      skin: "Лунный",     bg: "Сапфир",    bgGradient: "linear-gradient(145deg,#0d2b4b,#0d4a8a)", accentColor: "#3a8ef2", emoji: "🐍" },
-  { id: 6,  name: "Ice Cream",      number: 57887,  price: 5,  type: "Мороженое", skin: "Классика",   bg: "Нежный",    bgGradient: "linear-gradient(145deg,#2d1a4b,#5a2a7a)", accentColor: "#d44ef2", emoji: "🍦" },
-  { id: 7,  name: "Ice Cream",      number: 62441,  price: 8,  type: "Мороженое", skin: "Золото",     bg: "Закат",     bgGradient: "linear-gradient(145deg,#4b2a0d,#8a4a1a)", accentColor: "#f2844e", emoji: "🍦" },
-  { id: 8,  name: "Jelly Bunny",    number: 28843,  price: 3,  type: "Кролик",    skin: "Желе",       bg: "Бирюза",    bgGradient: "linear-gradient(145deg,#0d3b3b,#0d6a5a)", accentColor: "#2ef2c4", emoji: "🐇" },
-  { id: 9,  name: "Jelly Bunny",    number: 31200,  price: 3,  type: "Кролик",    skin: "Желе",       bg: "Мята",      bgGradient: "linear-gradient(145deg,#0d4b2a,#1a7a3d)", accentColor: "#4ef28e", emoji: "🐇" },
-  { id: 10, name: "Star Spinner",   number: 5510,   price: 15, type: "Звезда",    skin: "Призма",     bg: "Космос",    bgGradient: "linear-gradient(145deg,#0d0d2e,#1a0d3d)", accentColor: "#f2e24e", emoji: "⭐" },
-  { id: 11, name: "Star Spinner",   number: 8822,   price: 15, type: "Звезда",    skin: "Призма",     bg: "Туман",     bgGradient: "linear-gradient(145deg,#1e1e3e,#2e2e5e)", accentColor: "#f2e24e", emoji: "⭐" },
-  { id: 12, name: "Diamond Ring",   number: 1923,   price: 25, type: "Кольцо",    skin: "Бриллиант",  bg: "Лёд",       bgGradient: "linear-gradient(145deg,#0d2e3e,#0d4a5a)", accentColor: "#4ef2f2", emoji: "💍" },
-  { id: 13, name: "Cozy Candle",    number: 44321,  price: 4,  type: "Свеча",     skin: "Уют",        bg: "Тепло",     bgGradient: "linear-gradient(145deg,#3e1a0d,#6a2a1a)", accentColor: "#f2844e", emoji: "🕯️" },
-  { id: 14, name: "Cozy Candle",    number: 44400,  price: 4,  type: "Свеча",     skin: "Уют",        bg: "Тепло",     bgGradient: "linear-gradient(145deg,#3e2a0d,#6a4a1a)", accentColor: "#f2b44e", emoji: "🕯️" },
-  { id: 15, name: "Golden Star",    number: 3321,   price: 20, type: "Звезда",    skin: "Золото",     bg: "Роскошь",   bgGradient: "linear-gradient(145deg,#3e2a00,#6a4a00)", accentColor: "#f2c84e", emoji: "🌟" },
-  { id: 16, name: "Lunar Snake",    number: 205111, price: 5,  type: "Змея",      skin: "Лунный",     bg: "Фиолет",    bgGradient: "linear-gradient(145deg,#1e0d4b,#3d1a7a)", accentColor: "#9b4ef2", emoji: "🐍" },
-];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function getUnique(arr: GiftItem[], key: keyof GiftItem): string[] {
-  return [...new Set(arr.map((g) => String(g[key])))].sort();
-}
+import { useState, useMemo, useEffect } from "react";
+import { CartIcon, MagnifyingGlassIcon, StarIcon } from "@/components/ui/icons";
+import { api } from "@/api/client";
+import type { ShopGiftItem } from "@roulette/shared";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
-
-function TonIcon({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 56 56" fill="none">
-      <circle cx="28" cy="28" r="28" fill="#0098EA" />
-      <path
-        d="M37.58 15.4H18.42c-3.49 0-5.67 3.79-3.92 6.79l11.5 19.52c.87 1.5 2.97 1.5 3.84 0l11.5-19.52c1.75-3-.43-6.79-3.84-6.79Z"
-        fill="white"
-      />
-    </svg>
-  );
-}
 
 function SearchIcon() {
   return (
@@ -66,70 +14,10 @@ function SearchIcon() {
   );
 }
 
-function ChevronDown({ size = 10 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 12 8" fill="none">
-      <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-// ── Filter Dropdown ───────────────────────────────────────────────────────────
-
-interface FilterDropdownProps {
-  options: string[];
-  selected: string | null;
-  onSelect: (v: string | null) => void;
-  onClose: () => void;
-}
-
-function FilterDropdown({ options, selected, onSelect, onClose }: FilterDropdownProps) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [onClose]);
-
-  return (
-    <div
-      ref={ref}
-      className="absolute top-full left-0 mt-1.5 z-50 rounded-2xl overflow-hidden animate-scale-in"
-      style={{
-        background: "rgba(20,20,32,0.98)",
-        border: "1px solid rgba(255,255,255,0.1)",
-        minWidth: 140,
-        boxShadow: "0 12px 32px rgba(0,0,0,0.6)",
-      }}
-    >
-      <button
-        onClick={() => { onSelect(null); onClose(); }}
-        className="w-full text-left px-4 py-2.5 text-sm transition-colors"
-        style={{ color: selected === null ? "var(--accent)" : "rgba(255,255,255,0.5)" }}
-      >
-        Все
-      </button>
-      {options.map((opt) => (
-        <button
-          key={opt}
-          onClick={() => { onSelect(opt); onClose(); }}
-          className="w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-white/5"
-          style={{ color: selected === opt ? "var(--accent)" : "rgba(255,255,255,0.75)" }}
-        >
-          {opt}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 // ── Gift Card ─────────────────────────────────────────────────────────────────
 
 interface GiftCardProps {
-  gift: GiftItem;
+  gift: ShopGiftItem;
   inCart: boolean;
   onAdd: () => void;
 }
@@ -143,53 +31,56 @@ function GiftCard({ gift, inCart, onAdd }: GiftCardProps) {
         border: "1px solid rgba(255,255,255,0.07)",
       }}
     >
-      {/* Image area */}
+      {/* Image / emoji preview */}
       <div
         className="relative flex items-center justify-center"
-        style={{
-          background: gift.bgGradient,
-          aspectRatio: "1 / 1",
-        }}
+        style={{ aspectRatio: "1 / 1", background: "rgba(255,255,255,0.03)" }}
       >
-        {/* Glow */}
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            background: `radial-gradient(circle at 50% 60%, ${gift.accentColor}66, transparent 70%)`,
-          }}
-        />
-        {/* Stars decoration */}
-        <div className="absolute top-2 right-2.5 text-[8px] opacity-50">✦</div>
-        <div className="absolute top-4 left-3 text-[6px] opacity-35">✦</div>
-        <div className="absolute bottom-3 right-3 text-[5px] opacity-40">✦</div>
+        {gift.thumbnailUrl ? (
+          <img
+            src={gift.thumbnailUrl}
+            alt={gift.name}
+            className="w-full h-full object-contain p-2"
+          />
+        ) : (
+          <span className="select-none" style={{ fontSize: 40, lineHeight: 1 }}>
+            {gift.emoji ?? "🎁"}
+          </span>
+        )}
 
-        {/* Emoji */}
-        <span className="relative z-10 select-none" style={{ fontSize: 36 }}>
-          {gift.emoji}
-        </span>
+        {/* Limited badge */}
+        {gift.isLimited && (
+          <span
+            className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+            style={{ background: "linear-gradient(135deg,#f5c842,#c8960c)", color: "#fff" }}
+          >
+            LTD
+          </span>
+        )}
       </div>
 
       {/* Info */}
       <div className="px-2.5 pt-2 pb-2.5 flex flex-col gap-1">
         <p className="text-[12px] font-semibold text-white leading-tight truncate">{gift.name}</p>
-        <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
-          #{gift.number.toLocaleString()}
-        </p>
+
+        {gift.isLimited && gift.remainingCount != null && (
+          <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+            Осталось {gift.remainingCount.toLocaleString()}
+          </p>
+        )}
 
         {/* Price + Add */}
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-between mt-0.5">
           <div className="flex items-center gap-1">
-            <TonIcon size={13} />
-            <span className="text-[12px] font-bold text-white">{gift.price}</span>
+            <StarIcon size={12} />
+            <span className="text-[12px] font-bold text-white">{gift.starCount}</span>
           </div>
           <button
             onClick={onAdd}
-            className="w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90"
+            className="w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90 text-sm font-bold"
             style={{
               background: inCart ? "rgba(0,136,204,0.25)" : "var(--accent)",
               color: "#fff",
-              fontSize: 16,
-              lineHeight: 1,
             }}
           >
             {inCart ? "✓" : "+"}
@@ -200,33 +91,49 @@ function GiftCard({ gift, inCart, onAdd }: GiftCardProps) {
   );
 }
 
+// ── Skeleton card ─────────────────────────────────────────────────────────────
+
+function SkeletonCard() {
+  return (
+    <div
+      className="rounded-[18px] overflow-hidden flex flex-col animate-pulse"
+      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+    >
+      <div style={{ aspectRatio: "1/1", background: "rgba(255,255,255,0.05)" }} />
+      <div className="px-2.5 pt-2 pb-2.5 flex flex-col gap-2">
+        <div className="h-3 rounded-full w-3/4" style={{ background: "rgba(255,255,255,0.08)" }} />
+        <div className="h-3 rounded-full w-1/2" style={{ background: "rgba(255,255,255,0.05)" }} />
+      </div>
+    </div>
+  );
+}
+
 // ══ ShopPage ══════════════════════════════════════════════════════════════════
 
 export function ShopPage() {
+  const [gifts, setGifts] = useState<ShopGiftItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState<"type" | "skin" | "bg" | null>(null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [selectedSkin, setSelectedSkin] = useState<string | null>(null);
-  const [selectedBg, setSelectedBg] = useState<string | null>(null);
-  const [cart, setCart] = useState<Set<number>>(new Set());
+  const [showLimited, setShowLimited] = useState(false);
+  const [cart, setCart] = useState<Set<string>>(new Set());
 
-  const types = useMemo(() => getUnique(GIFTS, "type"), []);
-  const skins = useMemo(() => getUnique(GIFTS, "skin"), []);
-  const bgs   = useMemo(() => getUnique(GIFTS, "bg"),   []);
+  useEffect(() => {
+    api.get<ShopGiftItem[]>("/shop/gifts")
+      .then(setGifts)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return GIFTS.filter((g) => {
-      const matchSearch =
-        g.name.toLowerCase().includes(q) || String(g.number).includes(q);
-      const matchType = !selectedType || g.type === selectedType;
-      const matchSkin = !selectedSkin || g.skin === selectedSkin;
-      const matchBg   = !selectedBg   || g.bg   === selectedBg;
-      return matchSearch && matchType && matchSkin && matchBg;
+    return gifts.filter((g) => {
+      const matchSearch = g.name.toLowerCase().includes(q);
+      const matchLimited = !showLimited || g.isLimited;
+      return matchSearch && matchLimited;
     });
-  }, [search, selectedType, selectedSkin, selectedBg]);
+  }, [gifts, search, showLimited]);
 
-  function toggleCart(id: number) {
+  function toggleCart(id: string) {
     setCart((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -237,68 +144,11 @@ export function ShopPage() {
 
   const cartCount = cart.size;
 
-  // Filter chip helper
-  function FilterChip({
-    label,
-    key,
-    selected,
-  }: {
-    label: string;
-    key: "type" | "skin" | "bg";
-    selected: string | null;
-  }) {
-    const isOpen = activeFilter === key;
-    const isActive = selected !== null;
-    const options = key === "type" ? types : key === "skin" ? skins : bgs;
-
-    return (
-      <div className="relative">
-        <button
-          onClick={() => setActiveFilter(isOpen ? null : key)}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
-          style={{
-            background: isActive
-              ? "rgba(0,136,204,0.2)"
-              : "rgba(255,255,255,0.06)",
-            border: `1px solid ${isActive ? "rgba(0,136,204,0.4)" : "rgba(255,255,255,0.08)"}`,
-            color: isActive ? "var(--accent)" : "rgba(255,255,255,0.55)",
-          }}
-        >
-          {label}
-          {isActive && (
-            <span
-              className="rounded-full text-[9px] px-1 font-bold"
-              style={{ background: "var(--accent)", color: "#fff" }}
-            >
-              1
-            </span>
-          )}
-          <ChevronDown />
-        </button>
-
-        {isOpen && (
-          <FilterDropdown
-            options={options}
-            selected={selected}
-            onSelect={
-              key === "type"
-                ? setSelectedType
-                : key === "skin"
-                ? setSelectedSkin
-                : setSelectedBg
-            }
-            onClose={() => setActiveFilter(null)}
-          />
-        )}
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen pb-28" style={{ background: "var(--bg)" }}>
 
       {/* Header */}
-      <div className="relative px-4 pt-10 pb-3">
+      <div className="px-4 pt-10 pb-3">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-black text-white tracking-tight">Магазин</h1>
@@ -307,7 +157,6 @@ export function ShopPage() {
             </p>
           </div>
 
-          {/* Cart badge */}
           {cartCount > 0 && (
             <div
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full animate-scale-in"
@@ -318,9 +167,7 @@ export function ShopPage() {
               }}
             >
               <CartIcon size={16} />
-              <span className="text-sm font-bold" style={{ color: "var(--accent)" }}>
-                {cartCount}
-              </span>
+              <span className="text-sm font-bold">{cartCount}</span>
             </div>
           )}
         </div>
@@ -340,16 +187,13 @@ export function ShopPage() {
           </span>
           <input
             type="text"
-            placeholder="Поиск Гифта"
+            placeholder="Поиск гифта"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/25"
           />
           {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="text-white/30 text-lg leading-none"
-            >
+            <button onClick={() => setSearch("")} className="text-white/30 text-lg leading-none">
               ×
             </button>
           )}
@@ -358,38 +202,41 @@ export function ShopPage() {
 
       {/* Filter chips */}
       <div className="px-4 mb-4 flex items-center gap-2">
-        <FilterChip label="Тип"  key="type" selected={selectedType} />
-        <FilterChip label="Скин" key="skin" selected={selectedSkin} />
-        <FilterChip label="Фон"  key="bg"   selected={selectedBg} />
-
-        {/* Clear filters */}
-        {(selectedType || selectedSkin || selectedBg) && (
-          <button
-            onClick={() => {
-              setSelectedType(null);
-              setSelectedSkin(null);
-              setSelectedBg(null);
-            }}
-            className="text-[11px] px-2.5 py-1.5 rounded-full transition-opacity"
+        <button
+          onClick={() => setShowLimited((v) => !v)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+          style={{
+            background: showLimited ? "rgba(245,200,66,0.15)" : "rgba(255,255,255,0.06)",
+            border: `1px solid ${showLimited ? "rgba(245,200,66,0.4)" : "rgba(255,255,255,0.08)"}`,
+            color: showLimited ? "#f5c842" : "rgba(255,255,255,0.55)",
+          }}
+        >
+          <span
+            className="text-[9px] font-bold px-1 rounded-full"
             style={{
-              color: "rgba(255,255,255,0.35)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: showLimited ? "#f5c842" : "rgba(255,255,255,0.15)",
+              color: showLimited ? "#000" : "rgba(255,255,255,0.5)",
             }}
           >
-            Сбросить
-          </button>
-        )}
+            LTD
+          </span>
+          Лимитированные
+        </button>
       </div>
 
       {/* Count */}
       <div className="px-4 mb-3">
         <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.25)" }}>
-          {filtered.length} подарков
+          {loading ? "Загрузка…" : `${filtered.length} подарков`}
         </p>
       </div>
 
       {/* Gift grid */}
-      {filtered.length > 0 ? (
+      {loading ? (
+        <div className="px-4 grid grid-cols-3 gap-2.5">
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : filtered.length > 0 ? (
         <div className="px-4 grid grid-cols-3 gap-2.5">
           {filtered.map((gift, i) => (
             <div

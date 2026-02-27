@@ -3,9 +3,11 @@ import type { UserProfile } from "@roulette/shared";
 
 export class ProfileService {
   static async getProfile(userId: number): Promise<UserProfile> {
-    const user = await prisma.user.findUniqueOrThrow({
-      where: { id: BigInt(userId) },
-    });
+    const [user, giftCount] = await Promise.all([
+      prisma.user.findUniqueOrThrow({ where: { id: BigInt(userId) } }),
+      prisma.gift.count({ where: { userId: BigInt(userId) } }),
+    ]);
+
     return {
       id: user.id.toString(),
       username: user.username,
@@ -16,6 +18,7 @@ export class ProfileService {
       walletAddress: user.walletAddress,
       lastClaimAt: user.lastClaimAt?.toISOString() ?? null,
       createdAt: user.createdAt.toISOString(),
+      giftCount,
     };
   }
 

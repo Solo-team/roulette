@@ -21,8 +21,24 @@ model User {
   referrer         User?       @relation("Referrals", fields: [referrerId], references: [id])
   referrals        User[]      @relation("Referrals")
   completedTasks   UserTask[]
+  gifts            Gift[]
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+}
+
+/// Telegram-гифт, отправленный пользователем на профиль бота
+model Gift {
+  id           String   @id @default(cuid())
+  userId       BigInt
+  user         User     @relation(fields: [userId], references: [id])
+  tgGiftId     String                   // Telegram gift.id
+  thumbnailUrl String?                  // URL превью стикера (резолвится при получении)
+  emoji        String?                  // emoji стикера, fallback для отображения
+  starCount    Int      @default(0)     // стоимость гифта в Stars
+  isUpgraded   Boolean  @default(false)
+  receivedAt   DateTime @default(now())
+
+  @@index([userId])
 }
 
 model UserTask {

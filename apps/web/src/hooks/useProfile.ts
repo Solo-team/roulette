@@ -13,6 +13,7 @@ const DEV_MOCK_PROFILE: UserProfile = {
   walletAddress: null,
   lastClaimAt: null,
   createdAt: new Date(Date.now() - 30 * 86400_000).toISOString(),
+  giftCount: 0,
 };
 
 export function useProfile() {

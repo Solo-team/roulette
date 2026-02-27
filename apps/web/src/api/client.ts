@@ -6,6 +6,16 @@ const DEV_MOCKS: Record<string, unknown> = {
     coins: Math.floor(Math.random() * 500) + 100,
     nextClaimAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
   }),
+  "GET /inventory": [],
+  "GET /shop/gifts": [
+    { id: "1", name: "Lunar Snake",  emoji: "🐍", thumbnailUrl: null, starCount: 50,  isLimited: false },
+    { id: "2", name: "Ice Cream",    emoji: "🍦", thumbnailUrl: null, starCount: 50,  isLimited: false },
+    { id: "3", name: "Jelly Bunny",  emoji: "🐇", thumbnailUrl: null, starCount: 25,  isLimited: false },
+    { id: "4", name: "Star Spinner", emoji: "⭐", thumbnailUrl: null, starCount: 150, isLimited: true, totalCount: 1000, remainingCount: 312 },
+    { id: "5", name: "Diamond Ring", emoji: "💍", thumbnailUrl: null, starCount: 250, isLimited: true, totalCount: 500,  remainingCount: 77  },
+    { id: "6", name: "Cozy Candle",  emoji: "🕯️", thumbnailUrl: null, starCount: 25,  isLimited: false },
+    { id: "7", name: "Golden Star",  emoji: "🌟", thumbnailUrl: null, starCount: 200, isLimited: true, totalCount: 2500, remainingCount: 841 },
+  ],
   "GET /referrals": {
     referredCount: 0,
     earnedTon: 0,

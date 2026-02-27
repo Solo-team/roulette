@@ -78,6 +78,12 @@ function pluralDays(n: number) {
   return "дней";
 }
 
+function giftWord(n: number) {
+  if (n % 10 === 1 && n % 100 !== 11) return "гифт";
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return "гифта";
+  return "гифтов";
+}
+
 // ── Row ────────────────────────────────────────────────────────────────────────
 
 interface RowProps {
@@ -297,7 +303,9 @@ export function ProfilePage() {
           <Row
             icon={<GiftBoxIcon size={20} />}
             title="Инвентарь"
-            sub="0 предметов"
+            sub={profile.giftCount === 0
+              ? "Нет гифтов"
+              : `${profile.giftCount} ${giftWord(profile.giftCount)}`}
             onClick={() => setShowInventory(true)}
           />
           <Divider />

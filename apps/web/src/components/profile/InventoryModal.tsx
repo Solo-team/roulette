@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTgBack } from "@/hooks/useTgBack";
-import { StackIcon, GiftBoxIcon, MagnifyingGlassIcon } from "@/components/ui/icons";
+import { StackIcon, GiftBoxIcon, MagnifyingGlassIcon, StarIcon } from "@/components/ui/icons";
+import { api } from "@/api/client";
+import type { GiftInventoryItem } from "@roulette/shared";
 
 function TonIcon({ size = 14 }: { size?: number }) {
   return (
@@ -25,13 +27,72 @@ function ChevronRight() {
   );
 }
 
+// ── Карточка гифта ─────────────────────────────────────────────────────────────
+function GiftCard({ gift }: { gift: GiftInventoryItem }) {
+  return (
+    <div
+      className="rounded-[16px] overflow-hidden flex flex-col"
+      style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+    >
+      {/* Превью */}
+      <div
+        className="relative flex items-center justify-center"
+        style={{ aspectRatio: "1 / 1", background: "rgba(255,255,255,0.04)" }}
+      >
+        {gift.thumbnailUrl ? (
+          <img
+            src={gift.thumbnailUrl}
+            alt={gift.tgGiftId}
+            className="w-full h-full object-contain p-2"
+          />
+        ) : (
+          <span style={{ fontSize: 36, lineHeight: 1 }}>
+            {gift.emoji ?? "🎁"}
+          </span>
+        )}
+
+        {/* Upgraded badge */}
+        {gift.isUpgraded && (
+          <span
+            className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+            style={{ background: "linear-gradient(135deg, #F5C842, #C8960C)", color: "#fff" }}
+          >
+            UP
+          </span>
+        )}
+      </div>
+
+      {/* Инфо */}
+      <div className="px-2 pt-1.5 pb-2 flex items-center justify-between">
+        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+          #{gift.tgGiftId.slice(-6)}
+        </span>
+        <span className="flex items-center gap-0.5 text-[11px] font-semibold" style={{ color: "var(--gold)" }}>
+          <StarIcon size={10} />
+          {gift.starCount}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ══ InventoryModal ════════════════════════════════════════════════════════════
 export function InventoryModal({ onClose }: InventoryModalProps) {
   useTgBack(onClose);
   const [tab, setTab] = useState<"gifts" | "stickers">("gifts");
+  const [gifts, setGifts] = useState<GiftInventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const gifts: unknown[]    = [];
+  useEffect(() => {
+    api.get<GiftInventoryItem[]>("/inventory")
+      .then(setGifts)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const stickers: unknown[] = [];
+
+  const totalStars = gifts.reduce((sum, g) => sum + g.starCount, 0);
 
   function openTransferBot() {
     const handle = TRANSFER_BOT.replace("@", "");
@@ -58,7 +119,7 @@ export function InventoryModal({ onClose }: InventoryModalProps) {
               : { color: "rgba(255,255,255,0.3)" }
             }
           >
-            Гифты ({gifts.length})
+            Гифты ({loading ? "…" : gifts.length})
           </button>
           <button
             onClick={() => setTab("stickers")}
@@ -106,14 +167,24 @@ export function InventoryModal({ onClose }: InventoryModalProps) {
             </span>
             <span style={{ color: "var(--text-muted)", fontSize: 12 }}>•</span>
             <span className="flex items-center gap-1 text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>
-              <TonIcon size={14} /> 0 TON
+              <TonIcon size={14} /> {totalStars > 0 ? `${totalStars} Stars` : "0 TON"}
             </span>
           </div>
 
+          {/* Загрузка */}
+          {loading && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full border-2 animate-spin"
+                style={{ borderColor: "transparent", borderTopColor: "var(--accent)" }} />
+            </div>
+          )}
+
           {/* Пустой стейт */}
-          {gifts.length === 0 && (
+          {!loading && gifts.length === 0 && (
             <div className="flex-1 flex flex-col items-center justify-center px-8 gap-4">
-              <span className="select-none" style={{ color: "rgba(255,255,255,0.12)" }}><MagnifyingGlassIcon size={72} /></span>
+              <span className="select-none" style={{ color: "rgba(255,255,255,0.12)" }}>
+                <MagnifyingGlassIcon size={72} />
+              </span>
               <div className="text-center">
                 <p className="text-[17px] font-bold leading-snug text-white">
                   Гифтов пока нет. Купи<br />один в нашем магазине<br />
@@ -147,11 +218,13 @@ export function InventoryModal({ onClose }: InventoryModalProps) {
             </div>
           )}
 
-          {/* Список гифтов (будущее) */}
-          {gifts.length > 0 && (
+          {/* Сетка гифтов */}
+          {!loading && gifts.length > 0 && (
             <div className="flex-1 overflow-y-auto px-4 pb-8">
-              <div className="grid grid-cols-3 gap-2">
-                {/* gift cards */}
+              <div className="grid grid-cols-3 gap-2.5">
+                {gifts.map((gift) => (
+                  <GiftCard key={gift.id} gift={gift} />
+                ))}
               </div>
             </div>
           )}
@@ -161,7 +234,9 @@ export function InventoryModal({ onClose }: InventoryModalProps) {
       {/* ── Стикеры ── */}
       {tab === "stickers" && (
         <div className="flex-1 flex flex-col items-center justify-center px-8 gap-4">
-          <span className="select-none" style={{ color: "rgba(255,255,255,0.12)" }}><MagnifyingGlassIcon size={72} /></span>
+          <span className="select-none" style={{ color: "rgba(255,255,255,0.12)" }}>
+            <MagnifyingGlassIcon size={72} />
+          </span>
           <div className="text-center">
             <p className="text-[17px] font-bold text-white">Стикеров пока нет</p>
             <p className="text-[13px] mt-2 leading-relaxed" style={{ color: "var(--text-dim)" }}>
