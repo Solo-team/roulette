@@ -109,6 +109,8 @@ export interface UniqueGiftItem {
   collectionName: string;    // e.g. "Candy Canes"
   thumbnailUrl: string | null;
   priceTon: number;          // price in TON
+  priceNano: string;         // price in nanoTON (exact, as string to avoid float loss)
+  saleAddress: string | null; // sale contract address for direct TON purchase
   attributes: Array<{ trait_type: string; value: string }>;
   getgemsUrl: string;        // link to buy on Getgems
 }

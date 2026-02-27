@@ -4,19 +4,16 @@ import { Avatar } from "@/components/profile/Avatar";
 import { DonateModal } from "@/components/profile/DonateModal";
 import { InventoryModal } from "@/components/profile/InventoryModal";
 import { ReferralsModal } from "@/components/profile/ReferralsModal";
+import { SettingsModal } from "@/components/profile/SettingsModal";
 import { TasksModal } from "@/components/profile/TasksModal";
 import { useProfile } from "@/hooks/useProfile";
-import { useStore } from "@/store/index";
 import { api } from "@/api/client";
-import type { NftClaimResult, TasksInfo } from "@roulette/shared";
-import {
-  CoinIcon, GiftBoxIcon, ChecklistIcon, DiamondIcon,
-  FlameIcon, HeartIcon, SparkleIcon, ClockIcon, AlertIcon,
-} from "@/components/ui/icons";
+import type { TasksInfo } from "@roulette/shared";
+import { AlertIcon } from "@/components/ui/icons";
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
-function TonIcon({ size = 18 }: { size?: number }) {
+function TonIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 56 56" fill="none">
       <circle cx="28" cy="28" r="28" fill="#0098EA" />
@@ -25,23 +22,47 @@ function TonIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function WalletIcon({ connected }: { connected: boolean }) {
+function GearIcon() {
   return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="6" width="20" height="14" rx="3"
-        stroke={connected ? "var(--accent)" : "currentColor"} strokeWidth="1.5" />
-      <path d="M2 10h20" stroke={connected ? "var(--accent)" : "currentColor"} strokeWidth="1.5" />
-      <circle cx="16" cy="15" r="1.25"
-        fill={connected ? "var(--accent)" : "currentColor"} />
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+    </svg>
+  );
+}
+
+function ClipboardIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 2H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2h-2" />
+      <rect x="9" y="2" width="6" height="4" rx="1" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4CD964" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12l5 5L19 7" />
     </svg>
   );
 }
 
 function ChevronIcon() {
   return (
-    <svg width="6" height="11" viewBox="0 0 6 11" fill="none" style={{ flexShrink: 0 }}>
-      <path d="M1 1l4 4.5L1 10" stroke="currentColor" strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="6" height="11" viewBox="0 0 6 11" fill="none">
+      <path d="M1 1l4 4.5L1 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function WalletIcon({ connected }: { connected: boolean }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="6" width="20" height="14" rx="3"
+        stroke={connected ? "var(--accent)" : "currentColor"} strokeWidth="1.5" />
+      <path d="M2 10h20" stroke={connected ? "var(--accent)" : "currentColor"} strokeWidth="1.5" />
+      <circle cx="16" cy="15" r="1.25" fill={connected ? "var(--accent)" : "currentColor"} />
     </svg>
   );
 }
@@ -50,95 +71,33 @@ function Divider() {
   return <div className="h-px mx-4" style={{ background: "var(--border)" }} />;
 }
 
-// ── Countdown ──────────────────────────────────────────────────────────────────
-
-function useCountdown(targetIso: string | null) {
-  const [seconds, setSeconds] = useState(0);
-  useEffect(() => {
-    if (!targetIso) return;
-    const update = () =>
-      setSeconds(Math.max(0, Math.floor((new Date(targetIso).getTime() - Date.now()) / 1000)));
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, [targetIso]);
-  return {
-    seconds,
-    h: Math.floor(seconds / 3600),
-    m: Math.floor((seconds % 3600) / 60),
-    s: seconds % 60,
-  };
-}
-
-function pad(n: number) { return String(n).padStart(2, "0"); }
-
-function pluralDays(n: number) {
-  if (n % 10 === 1 && n % 100 !== 11) return "день";
-  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return "дня";
-  return "дней";
-}
-
-function giftWord(n: number) {
-  if (n % 10 === 1 && n % 100 !== 11) return "гифт";
-  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return "гифта";
-  return "гифтов";
-}
-
 // ── Row ────────────────────────────────────────────────────────────────────────
 
 interface RowProps {
-  icon: React.ReactNode;
+  icon: string;
   title: string;
-  sub?: string;
+  badge?: React.ReactNode;
   dot?: boolean;
-  onClick?: () => void;
-  right?: React.ReactNode;
-  iconBg?: string;
+  onClick: () => void;
 }
 
-function Row({ icon, title, sub, dot, onClick, right, iconBg }: RowProps) {
-  const isButton = !!onClick;
-  const Tag = isButton ? "button" : "div";
-
+function Row({ icon, title, badge, dot, onClick }: RowProps) {
   return (
-    <Tag
-      {...(isButton ? { onClick } : {})}
-      className={`w-full flex items-center gap-3 px-4 py-[14px] text-left${isButton ? " active:bg-white/[0.03] transition-colors" : ""}`}
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 px-4 py-[15px] text-left transition-colors active:bg-white/[0.03]"
     >
-      {/* Icon */}
-      <div
-        className="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0"
-        style={{ background: iconBg ?? "var(--bg-card-2)", color: "var(--text-dim)" }}
-      >
-        {icon}
-      </div>
-
-      {/* Text */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-semibold text-white leading-tight">{title}</p>
-        {sub && (
-          <p className="text-[11px] mt-[3px]" style={{ color: "var(--text-dim)" }}>{sub}</p>
-        )}
-      </div>
-
-      {/* Right slot */}
-      {right}
-
-      {/* Dot indicator */}
+      <span style={{ fontSize: 22, lineHeight: 1 }}>{icon}</span>
+      <span className="flex-1 text-[14px] font-semibold text-white leading-tight">{title}</span>
+      {badge}
       {dot && (
         <span
           className="w-[7px] h-[7px] rounded-full shrink-0"
           style={{ background: "var(--accent)", boxShadow: "0 0 6px rgba(0,136,204,0.7)" }}
         />
       )}
-
-      {/* Chevron */}
-      {isButton && (
-        <span style={{ color: "var(--text-muted)" }}>
-          <ChevronIcon />
-        </span>
-      )}
-    </Tag>
+      <span style={{ color: "var(--text-muted)" }}><ChevronIcon /></span>
+    </button>
   );
 }
 
@@ -146,49 +105,33 @@ function Row({ icon, title, sub, dot, onClick, right, iconBg }: RowProps) {
 
 export function ProfilePage() {
   const { profile, profileError } = useProfile();
-  const { updateCoins } = useStore();
 
-  const [showDonate, setShowDonate]       = useState(false);
+  const [showDonate,    setShowDonate]    = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [showReferrals, setShowReferrals] = useState(false);
-  const [showTasks, setShowTasks]         = useState(false);
-  const [tasksInfo, setTasksInfo]         = useState<TasksInfo | null>(null);
+  const [showTasks,     setShowTasks]     = useState(false);
+  const [showSettings,  setShowSettings]  = useState(false);
+  const [tasksInfo,     setTasksInfo]     = useState<TasksInfo | null>(null);
+  const [copied,        setCopied]        = useState(false);
 
   const [tonConnectUI] = useTonConnectUI();
   const walletAddress  = useTonAddress();
-
-  const [nextClaimAt, setNextClaimAt]   = useState<string | null>(null);
-  const [claimLoading, setClaimLoading] = useState(false);
-  const [justClaimed, setJustClaimed]   = useState(false);
-
-  const { seconds, h, m, s } = useCountdown(nextClaimAt);
-  const canClaim = seconds === 0;
 
   useEffect(() => {
     api.get<TasksInfo>("/tasks").then(setTasksInfo).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (profile?.lastClaimAt) {
-      setNextClaimAt(
-        new Date(new Date(profile.lastClaimAt).getTime() + 24 * 3600 * 1000).toISOString()
-      );
-    }
-  }, [profile?.lastClaimAt]);
-
-  async function handleClaim() {
-    setClaimLoading(true);
-    try {
-      const result = await api.post<NftClaimResult>("/nft/claim");
-      updateCoins(result.coins);
-      setNextClaimAt(result.nextClaimAt);
-      setJustClaimed(true);
-      setTimeout(() => setJustClaimed(false), 2500);
-    } catch { /* handled */ } finally { setClaimLoading(false); }
-  }
-
   function reloadTasks() {
     api.get<TasksInfo>("/tasks").then(setTasksInfo).catch(() => {});
+  }
+
+  function handleCopy() {
+    const text = walletAddress || "";
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   }
 
   // ── Loading / error ──────────────────────────────────────────────────────────
@@ -215,183 +158,183 @@ export function ProfilePage() {
     );
   }
 
-  const daysSince    = Math.floor((Date.now() - new Date(profile.createdAt).getTime()) / 86400000);
   const hasClaimable = tasksInfo?.tasks.some(t => t.status === "claimable") ?? false;
-  const tasksDone    = tasksInfo ? `${tasksInfo.completedCount} / ${tasksInfo.totalCount}` : "0 / 18";
+  const tasksDone    = tasksInfo ? `${tasksInfo.completedCount} / ${tasksInfo.totalCount}` : "…";
 
   return (
     <div className="min-h-screen pb-28" style={{ background: "var(--bg)" }}>
 
-      {/* ── Topbar ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-end px-4 pt-5">
+      {/* ── Top bar ── */}
+      <div className="flex items-center justify-between px-4 pt-5">
+
+        {/* Left: 🌸 + gift count */}
         <button
-          onClick={() => walletAddress ? tonConnectUI.disconnect() : tonConnectUI.openModal()}
+          onClick={() => setShowInventory(true)}
+          className="flex items-center gap-1.5 px-3 py-[7px] rounded-full transition-all active:opacity-60"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+        >
+          <span style={{ fontSize: 15 }}>🌸</span>
+          <span className="text-[13px] font-bold text-white">{profile.giftCount}</span>
+        </button>
+
+        {/* Right: settings */}
+        <button
+          onClick={() => setShowSettings(true)}
           className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:opacity-60"
           style={{
-            background: walletAddress ? "rgba(0,136,204,0.1)" : "var(--bg-card)",
-            border: `1px solid ${walletAddress ? "var(--accent-border)" : "var(--border)"}`,
-            color: walletAddress ? "var(--accent)" : "var(--text-dim)",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            color: "var(--text-dim)",
           }}
         >
-          <WalletIcon connected={!!walletAddress} />
+          <GearIcon />
         </button>
       </div>
 
-      {/* ── Hero ────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center pt-6 pb-7">
-
-        {/* Avatar */}
-        <div className="relative w-[92px] h-[92px]">
-          {/* Glow */}
-          <div
-            className="absolute inset-0 rounded-full animate-avatar-glow"
-            style={{ background: "var(--accent)", filter: "blur(18px)" }}
-          />
-          {/* Ring */}
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{ border: "1.5px solid rgba(255,255,255,0.15)", zIndex: 1 }}
-          />
-          {/* Photo */}
-          <div className="relative w-full h-full rounded-full overflow-hidden" style={{ zIndex: 2 }}>
-            <Avatar
-              photoUrl={profile.photoUrl}
-              firstName={profile.firstName}
-              userId={profile.id}
-              size={92}
-            />
-          </div>
-        </div>
-
-        {/* Name */}
-        <p
-          className="mt-4 text-[16px] font-semibold animate-count-in"
-          style={{ color: "rgba(255,255,255,0.75)", animationDelay: "0.1s" }}
+      {/* ── Avatar + username ── */}
+      <div className="flex flex-col items-center pt-5 pb-5">
+        <div
+          className="w-[88px] h-[88px] rounded-full overflow-hidden"
+          style={{ boxShadow: "0 0 0 1.5px rgba(255,255,255,0.1)" }}
         >
+          <Avatar
+            photoUrl={profile.photoUrl}
+            firstName={profile.firstName}
+            userId={profile.id}
+            size={88}
+          />
+        </div>
+        <p className="mt-3 text-[15px] font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
           {profile.username ? `@${profile.username}` : profile.firstName}
         </p>
-
-        {/* Coin balance */}
-        <div
-          className="flex items-center gap-2 mt-3 animate-count-in"
-          style={{ animationDelay: "0.18s", color: "var(--gold)" }}
-        >
-          <CoinIcon size={30} />
-          <span className="font-black text-white" style={{ fontSize: 36, lineHeight: 1 }}>
-            {profile.coins.toLocaleString()}
-          </span>
-        </div>
-
-        {/* Top-up button */}
-        <button
-          onClick={() => setShowDonate(true)}
-          className="mt-4 px-6 py-[9px] rounded-full text-[13px] font-bold btn-primary animate-count-in"
-          style={{ animationDelay: "0.26s" }}
-        >
-          Пополнить
-        </button>
       </div>
 
-      {/* ── Cards ───────────────────────────────────────────────────────────── */}
-      <div className="px-4 flex flex-col gap-[10px]">
-
-        {/* Actions */}
+      {/* ── Balance card ── */}
+      <div className="px-4 mb-3">
         <div
-          className="rounded-[22px] overflow-hidden animate-fade-up"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", animationDelay: "0.1s" }}
+          className="rounded-[20px] overflow-hidden"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+        >
+          {/* Top row: label + amount + buttons */}
+          <div className="flex items-center gap-3 px-4 pt-4 pb-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.12em] mb-1.5" style={{ color: "var(--text-muted)" }}>
+                Баланс
+              </p>
+              <div className="flex items-center gap-2">
+                <TonIcon size={22} />
+                <span className="text-[20px] font-black text-white leading-none">
+                  {profile.totalDonatedTon.toFixed(2)} TON
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setShowDonate(true)}
+                className="px-4 py-2 rounded-[12px] text-[13px] font-bold transition-all active:scale-95"
+                style={{ background: "var(--accent)", color: "#fff", boxShadow: "0 2px 12px rgba(0,136,204,0.3)" }}
+              >
+                Пополнить
+              </button>
+              <button
+                onClick={handleCopy}
+                disabled={!walletAddress}
+                className="w-9 h-9 rounded-[12px] flex items-center justify-center transition-all active:scale-90 disabled:opacity-30"
+                style={{
+                  background: copied ? "rgba(76,217,100,0.14)" : "var(--bg-card-2)",
+                  color: copied ? "#4CD964" : "var(--text-dim)",
+                }}
+              >
+                {copied ? <CheckIcon /> : <ClipboardIcon />}
+              </button>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px mx-0" style={{ background: "var(--border)" }} />
+
+          {/* Bottom row: wallet */}
+          <button
+            onClick={() => walletAddress ? tonConnectUI.disconnect() : tonConnectUI.openModal()}
+            className="w-full flex items-center gap-2.5 px-4 py-3 transition-colors active:bg-white/[0.03]"
+          >
+            <span style={{ color: walletAddress ? "var(--accent)" : "var(--text-muted)" }}>
+              <WalletIcon connected={!!walletAddress} />
+            </span>
+            {walletAddress ? (
+              <>
+                <span className="text-[12px] font-mono flex-1 text-left truncate" style={{ color: "rgba(255,255,255,0.45)" }}>
+                  {walletAddress.slice(0, 8)}…{walletAddress.slice(-6)}
+                </span>
+                <span className="text-[11px] font-semibold shrink-0" style={{ color: "#FF3B30" }}>
+                  Отключить
+                </span>
+              </>
+            ) : (
+              <span className="text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>
+                Подключить кошелёк
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Action rows ── */}
+      <div className="px-4">
+        <div
+          className="rounded-[22px] overflow-hidden"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
         >
           <Row
-            icon={<GiftBoxIcon size={20} />}
-            title="Инвентарь"
-            sub={profile.giftCount === 0
-              ? "Нет гифтов"
-              : `${profile.giftCount} ${giftWord(profile.giftCount)}`}
+            icon="🎁"
+            title="Инвентарь подарков"
+            badge={
+              <span
+                className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
+                style={{ background: "rgba(255,59,48,0.18)", color: "#FF3B30" }}
+              >
+                {profile.giftCount}
+              </span>
+            }
             onClick={() => setShowInventory(true)}
           />
           <Divider />
           <Row
-            icon={<ChecklistIcon size={20} />}
+            icon="📋"
             title="Задания"
-            sub={tasksDone}
+            badge={
+              <span
+                className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                style={{ background: "rgba(245,200,66,0.15)", color: "var(--gold)" }}
+              >
+                {tasksDone}
+              </span>
+            }
             dot={hasClaimable}
             onClick={() => setShowTasks(true)}
           />
           <Divider />
           <Row
-            icon={<DiamondIcon size={20} />}
+            icon="💎"
             title="Рефералы"
-            sub="10% с каждого друга"
             onClick={() => setShowReferrals(true)}
           />
-        </div>
-
-        {/* Status */}
-        <div
-          className="rounded-[22px] overflow-hidden animate-fade-up"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", animationDelay: "0.18s" }}
-        >
-          {/* Daily claim */}
-          <div className="flex items-center gap-3 px-4 py-[14px]">
-            <div
-              className="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0"
-              style={{
-                background: canClaim ? "rgba(0,136,204,0.13)" : "var(--bg-card-2)",
-                color: justClaimed ? "var(--gold)" : canClaim ? "var(--accent)" : "var(--text-muted)",
-              }}
-            >
-              {justClaimed ? <SparkleIcon size={20} /> : canClaim ? <GiftBoxIcon size={20} /> : <ClockIcon size={20} />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-semibold text-white leading-tight">Ежедневный клейм</p>
-              {!canClaim && !justClaimed ? (
-                <p className="text-[11px] font-mono mt-[3px]" style={{ color: "var(--accent)" }}>
-                  {pad(h)}:{pad(m)}:{pad(s)}
-                </p>
-              ) : (
-                <p className="text-[11px] mt-[3px]" style={{ color: "var(--text-dim)" }}>+100 монет</p>
-              )}
-            </div>
-            <button
-              onClick={handleClaim}
-              disabled={!canClaim || claimLoading}
-              className={`shrink-0 px-3.5 py-[7px] rounded-[10px] text-[12px] font-bold transition-all disabled:opacity-35${canClaim && !claimLoading ? " animate-pulse-accent" : ""}`}
-              style={canClaim
-                ? { background: "var(--accent)", color: "#fff" }
-                : { background: "var(--bg-card-2)", color: "var(--text-dim)" }
-              }
-            >
-              {claimLoading ? "..." : canClaim ? "Забрать" : "Ждать"}
-            </button>
-          </div>
-
           <Divider />
-
-          {/* Days in game */}
           <Row
-            icon={<FlameIcon size={20} />}
-            title="В игре"
-            sub={`${daysSince} ${pluralDays(daysSince)}`}
-          />
-
-          <Divider />
-
-          {/* TON donated */}
-          <Row
-            icon={<HeartIcon size={20} />}
-            title="TON донат"
-            sub={`${profile.totalDonatedTon.toFixed(2)} TON`}
-            iconBg="rgba(0,136,204,0.1)"
+            icon="🥇"
+            title="Стейкинг"
+            onClick={() => setShowInventory(true)}
           />
         </div>
       </div>
 
-      {/* ── Modals ──────────────────────────────────────────────────────────── */}
+      {/* ── Modals ── */}
       {showDonate    && <DonateModal    onClose={() => setShowDonate(false)} />}
       {showInventory && <InventoryModal onClose={() => setShowInventory(false)} />}
       {showReferrals && <ReferralsModal onClose={() => setShowReferrals(false)} />}
-      {showTasks     && (
-        <TasksModal onClose={() => { setShowTasks(false); reloadTasks(); }} />
-      )}
+      {showTasks     && <TasksModal     onClose={() => { setShowTasks(false); reloadTasks(); }} />}
+      {showSettings  && <SettingsModal  onClose={() => setShowSettings(false)} />}
     </div>
   );
 }

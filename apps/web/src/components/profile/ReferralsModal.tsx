@@ -63,11 +63,25 @@ export function ReferralsModal({ onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "var(--bg)" }}>
 
+      {/* ── Header ── */}
+      <div className="flex-shrink-0 flex items-center gap-3 px-4 pt-5 pb-1">
+        <button
+          onClick={onClose}
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:opacity-60"
+          style={{ background: "var(--bg-card)", color: "var(--text-dim)" }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+        </button>
+        <h2 className="text-[17px] font-bold text-white">Рефералы</h2>
+      </div>
+
       {/* ── Контент ───────────────────────────────────────────────────────── */}
       <div className="relative flex-1 overflow-y-auto flex flex-col items-center px-4 pb-4 gap-4">
 
         {/* ── Diamond hero ── */}
-        <div className="relative flex items-center justify-center mt-10 mb-1">
+        <div className="relative flex items-center justify-center mt-4 mb-1">
           {/* Outer rotating ring */}
           <div
             className="absolute rounded-full animate-spin-slow"
@@ -213,6 +227,6 @@ export function ReferralsModal({ onClose }: Props) {
 
 function friendWord(n: number): string {
   if (n % 10 === 1 && n % 100 !== 11) return "друга";
-  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return "друзей";
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return "друга";
   return "друзей";
 }

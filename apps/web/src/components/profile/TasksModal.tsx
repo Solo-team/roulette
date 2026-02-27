@@ -139,9 +139,23 @@ export function TasksModal({ onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "var(--bg)" }}>
 
+      {/* ── Header ── */}
+      <div className="flex-shrink-0 flex items-center gap-3 px-4 pt-5 pb-1">
+        <button
+          onClick={onClose}
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:opacity-60"
+          style={{ background: "var(--bg-card)", color: "var(--text-dim)" }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+        </button>
+        <h2 className="text-[17px] font-bold text-white">Задания</h2>
+      </div>
+
       {/* ── Прогресс ─────────────────────────────────────────────────────── */}
       {data && (
-        <div className="px-4 pt-5 pb-3 shrink-0">
+        <div className="px-4 pt-4 pb-3 shrink-0">
           <div className="flex justify-between text-[11px] mb-1.5">
             <span style={{ color: "var(--text-muted)" }}>Прогресс</span>
             <span style={{ color: "var(--text-dim)" }}>{data.completedCount} / {data.totalCount}</span>

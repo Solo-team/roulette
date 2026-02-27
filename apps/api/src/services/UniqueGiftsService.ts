@@ -141,6 +141,7 @@ interface TonApiNftItem {
   };
   previews?: Array<{ resolution: string; url: string }>;
   sale?: {
+    address?: string;  // sale contract address (for direct purchase)
     market?: { address: string; name?: string };
     price?: { currency_type: string; value: string; decimals: number };
   };
@@ -195,8 +196,8 @@ async function fetchCollectionSales(address: string): Promise<UniqueGiftItem[]> 
     return items
       .filter(isTrustedSale)
       .map((item): UniqueGiftItem => {
-        const priceNano = BigInt(item.sale!.price!.value);
-        const priceTon = Number(priceNano) / 1e9;
+        const priceNanoStr = item.sale!.price!.value;
+        const priceTon = Number(BigInt(priceNanoStr)) / 1e9;
 
         const attrs = (item.metadata?.attributes ?? []).map((a) => ({
           trait_type: String(a.trait_type ?? ""),
@@ -209,6 +210,8 @@ async function fetchCollectionSales(address: string): Promise<UniqueGiftItem[]> 
           collectionName: item.collection?.name ?? "Telegram Gifts",
           thumbnailUrl: getPreview(item),
           priceTon,
+          priceNano: priceNanoStr,
+          saleAddress: item.sale?.address ?? null,
           attributes: attrs,
           getgemsUrl: `https://getgems.io/nft/${item.address}`,
         };

@@ -51,9 +51,15 @@ await app.register(rateLimit, {
 });
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-const allowedOrigins = [config.webAppUrl, "http://localhost:5173", "http://localhost:4173"];
+// WEB_APP_URL поддерживает несколько origin через запятую:
+// WEB_APP_URL=https://roulette-kz79.vercel.app,http://localhost:5173
+const allowedOrigins = new Set([
+  ...config.webAppUrl.split(",").map((s) => s.trim()).filter(Boolean),
+  "http://localhost:5173",
+  "http://localhost:4173",
+]);
 await app.register(cors, {
-  origin: (origin, cb) => cb(null, !origin || allowedOrigins.includes(origin)),
+  origin: (origin, cb) => cb(null, !origin || allowedOrigins.has(origin)),
 });
 
 // ── Routes ────────────────────────────────────────────────────────────────────

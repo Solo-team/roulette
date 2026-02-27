@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTgBack } from "@/hooks/useTgBack";
 import { StackIcon, GiftBoxIcon, MagnifyingGlassIcon, StarIcon } from "@/components/ui/icons";
 import { api } from "@/api/client";
 import type { GiftInventoryItem } from "@roulette/shared";
 
-function TonIcon({ size = 14 }: { size?: number }) {
+function BackArrow() {
   return (
-    <svg width={size} height={size} viewBox="0 0 56 56" fill="none">
-      <circle cx="28" cy="28" r="28" fill="#0098EA" />
-      <path d="M37.58 15.4H18.42c-3.49 0-5.67 3.79-3.92 6.79l11.5 19.52c.87 1.5 2.97 1.5 3.84 0l11.5-19.52c1.75-3-.43-6.79-3.84-6.79Z" fill="white" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5M12 5l-7 7 7 7" />
     </svg>
   );
 }
@@ -79,6 +79,7 @@ function GiftCard({ gift }: { gift: GiftInventoryItem }) {
 // ══ InventoryModal ════════════════════════════════════════════════════════════
 export function InventoryModal({ onClose }: InventoryModalProps) {
   useTgBack(onClose);
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"gifts" | "stickers">("gifts");
   const [gifts, setGifts] = useState<GiftInventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,11 +100,25 @@ export function InventoryModal({ onClose }: InventoryModalProps) {
     window.Telegram?.WebApp?.openTelegramLink(`https://t.me/${handle}`);
   }
 
+  function goToShop() {
+    onClose();
+    navigate("/shop");
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "var(--bg)" }}>
 
-      {/* top spacer */}
-      <div className="flex-shrink-0 pt-5" />
+      {/* ── Header ── */}
+      <div className="flex-shrink-0 flex items-center gap-3 px-4 pt-5 pb-1">
+        <button
+          onClick={onClose}
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:opacity-60"
+          style={{ background: "var(--bg-card)", color: "var(--text-dim)" }}
+        >
+          <BackArrow />
+        </button>
+        <h2 className="text-[17px] font-bold text-white">Инвентарь</h2>
+      </div>
 
       {/* ── Табы ── */}
       <div className="flex-shrink-0 px-4 mb-3">
@@ -167,7 +182,7 @@ export function InventoryModal({ onClose }: InventoryModalProps) {
             </span>
             <span style={{ color: "var(--text-muted)", fontSize: 12 }}>•</span>
             <span className="flex items-center gap-1 text-[13px] font-semibold" style={{ color: "var(--text-dim)" }}>
-              <TonIcon size={14} /> {totalStars > 0 ? `${totalStars} Stars` : "0 TON"}
+              <StarIcon size={14} /> {totalStars} Stars
             </span>
           </div>
 
@@ -208,7 +223,7 @@ export function InventoryModal({ onClose }: InventoryModalProps) {
                   Отправить
                 </button>
                 <button
-                  onClick={onClose}
+                  onClick={goToShop}
                   className="flex-1 py-[14px] rounded-[16px] text-[14px] font-bold"
                   style={{ background: "#ffffff", color: "#09090f" }}
                 >
@@ -244,7 +259,7 @@ export function InventoryModal({ onClose }: InventoryModalProps) {
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={goToShop}
             className="w-full py-[14px] rounded-[16px] text-[14px] font-bold text-white mt-2"
             style={{ background: "var(--accent)" }}
           >
